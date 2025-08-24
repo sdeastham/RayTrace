@@ -52,14 +52,18 @@ internal class Program
         ImgToFile("image.ppm", imgData);
     }
 
-    public static bool HitSphere(Vector3 center, float radius, Ray r)
+    public static float HitSphere(Vector3 center, float radius, Ray r)
     {
         Vector3 oc = center - r.Origin;
         float a = Vector3.Dot(r.Direction, r.Direction);
         float b = -2.0f * Vector3.Dot(r.Direction, oc);
         float c = Vector3.Dot(oc, oc) - (radius * radius);
         float discriminant = b * b - 4.0f * a * c;
-        return discriminant >= 0.0f;
+        if (discriminant < 0.0f)
+        {
+            return -1.0f;
+        }
+        return (-b - (float)Math.Sqrt(discriminant)) / (2.0f * a);
     }
 
     public static Vector3 UnitVector(Vector3 v)
@@ -70,9 +74,11 @@ internal class Program
     public static Vector3 RayColor(Ray r)
     {
         // Check if the ray collides with a single sphere
-        if (HitSphere(new Vector3(0.0f, 0.0f, -1.0f), 0.5f, r))
+        float t = (HitSphere(new Vector3(0.0f, 0.0f, -1.0f), 0.5f, r));
+        if (t > 0.0f)
         {
-            return new Vector3(1.0f, 0.0f, 0.0f);
+            Vector3 N = UnitVector(r.At(t) - new Vector3(0.0f, 0.0f, -1.0f));
+            return 0.5f * new Vector3(N.X + 1.0f, N.Y + 1.0f, N.Z + 1.0f);
         }
         // Didn't hit anything - return the "sky"
         Vector3 unitDirection = UnitVector(r.Direction);
