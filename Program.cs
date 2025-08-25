@@ -82,7 +82,7 @@ internal class Program
     {
         // Check if the ray collides with anything
         HitRecord rec = new();
-        if (world.Hit(r, 0.0f, float.PositiveInfinity, rec))
+        if (world.Hit(r, new Interval(0.0f, float.PositiveInfinity), rec))
         {
             return 0.5f * (rec.Normal + new Vector3(1.0f, 1.0f, 1.0f));
         }

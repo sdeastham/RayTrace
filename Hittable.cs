@@ -2,6 +2,11 @@ using System.Numerics;
 
 namespace RayTrace;
 
+// Holds:
+// * Hittable     - abstract class of hittable objects
+// * HittableList - LinkedList which holds all the Hittables which have interacted with a Ray
+// * Sphere       - implementation of Hittable for a sphere
+
 public class HittableList : Hittable
 {
     public LinkedList<Hittable> Objects;
@@ -20,18 +25,18 @@ public class HittableList : Hittable
 
     public void Add(Hittable Object) => Objects.AddLast(Object);
 
-    public override bool Hit(Ray r, float rayTMin, float rayTMax, HitRecord rec)
+    public override bool Hit(Ray r, Interval rayT, HitRecord rec)
     {
         HitRecord tempRec = new();
         bool hitAnything = false;
-        var closestSoFar = rayTMax;
+        var closestSoFar = rayT.Max;
         foreach (Hittable tempObject in Objects)
         {
-            if (tempObject.Hit(r, rayTMin, closestSoFar, tempRec))
+            if (tempObject.Hit(r, new Interval(rayT.Min,closestSoFar), tempRec))
             {
                 hitAnything = true;
                 closestSoFar = (float)tempRec.T;
-                //rec = tempRec;
+                // Update the "closest" hit
                 rec.T = tempRec.T;
                 rec.P = tempRec.P;
                 rec.Normal = tempRec.Normal;
@@ -76,7 +81,7 @@ public class HitRecord
 
 public abstract class Hittable
 {
-    public abstract bool Hit(Ray r, float rayTMin, float rayTMax, HitRecord rec);
+    public abstract bool Hit(Ray r, Interval rayT, HitRecord rec);
 }
 
 public class Sphere(Vector3 center, float radius) : Hittable
@@ -84,7 +89,7 @@ public class Sphere(Vector3 center, float radius) : Hittable
     public Vector3 Center { get; private set; } = center;
     public float Radius { get; private set; } = Math.Max(0.0f,radius);
 
-    public override bool Hit(Ray r, float rayTMin, float rayTMax, HitRecord rec)
+    public override bool Hit(Ray r, Interval rayT, HitRecord rec)
     {
         Vector3 oc = Center - r.Origin;
         var a = r.Direction.LengthSquared();
@@ -98,10 +103,10 @@ public class Sphere(Vector3 center, float radius) : Hittable
         var sqrtd = Math.Sqrt(discriminant);
         // Find the nearest root within the valid range
         var root = (h - sqrtd) / a;
-        if (root <= rayTMin || rayTMax <= root)
+        if (!rayT.Surrounds((float)root))
         {
             root = (h + sqrtd) / a;
-            if (root <= rayTMin || rayTMax <= root)
+            if (!rayT.Surrounds((float)root))
             {
                 return false;
             }
