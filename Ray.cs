@@ -3,7 +3,7 @@ using System.Reflection.Metadata;
 
 namespace RayTrace;
 
-class Ray(Vector3 origin, Vector3 direction)
+public class Ray(Vector3 origin, Vector3 direction)
 {
     public Vector3 Origin { get; private set; } = origin;
     public Vector3 Direction { get; private set; } = direction;
