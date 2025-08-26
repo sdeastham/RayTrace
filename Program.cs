@@ -14,7 +14,12 @@ internal class Program
         // "Ground"
         world.Add(new Sphere(new Vector3(0.0f, -100.5f, -1.0f), 100.0f));
 
-        Camera cam = new(imageWidth: 400, aspectRatio: 16.0 / 9.0);
+        Camera cam = new()
+        {
+            ImageWidth = 400,
+            AspectRatio = 16.0 / 9.0,
+            SamplesPerPixel = 100
+        };
 
         cam.Render(world);
         cam.WriteToFile("image.ppm");

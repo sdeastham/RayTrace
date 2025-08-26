@@ -21,6 +21,13 @@ public class Interval
         Max = max;
     }
 
+    public double Clamp(double x)
+    {
+        if (x < Min) return Min;
+        if (x > Max) return Max;
+        return x;
+    }
+
     public float Size => Max - Min;
 
     public bool Contains(float x) => Min <= x && x <= Max;
