@@ -123,12 +123,14 @@ public class Camera
             return new Vector3d(0.0, 0.0, 0.0);
         }
         // Check if the ray collides with anything
-            HitRecord rec = new();
-        if (world.Hit(r, new Interval(0.0, double.PositiveInfinity), rec))
+        // Lower limit of 0.001 prevents floating-point nonsense where an intersection can be
+        // found immediately after a bounce
+        HitRecord rec = new();
+        if (world.Hit(r, new Interval(0.001, double.PositiveInfinity), rec))
         {
             //return 0.5 * (rec.Normal + new Vector3d(1.0, 1.0, 1.0));
             Vector3d direction = Generator.RandomVectorOnHemisphere(rec.Normal);
-            return 0.5 * RayColor(new Ray(rec.P, direction), depth-1, world);
+            return 0.5 * RayColor(new Ray(rec.P, direction), depth - 1, world);
         }
         // Didn't hit anything - return the "sky"
         Vector3d unitDirection = RTUtility.UnitVector(r.Direction);
