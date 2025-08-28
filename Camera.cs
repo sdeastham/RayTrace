@@ -13,11 +13,11 @@ public class Camera
     // Private
     private double PixelSamplesScale; // Scaling factor for a sum of pixel samples
     private int ImageHeight; // Rendered image height in pixels
-    private Vector3 Center; // Camera center location
-    private Vector3 Pixel00Loc; // Location of pixel 0,0
-    private Vector3 PixelDeltaU; // Offset between pixels (horizontal)
-    private Vector3 PixelDeltaV; // Offset between pixels (vertical)
-    private Vector3[,]? ImageData;
+    private Vector3d Center; // Camera center location
+    private Vector3d Pixel00Loc; // Location of pixel 0,0
+    private Vector3d PixelDeltaU; // Offset between pixels (horizontal)
+    private Vector3d PixelDeltaV; // Offset between pixels (vertical)
+    private Vector3d[,]? ImageData;
     private readonly RTRandom Generator = new();
 
     public Camera()
@@ -34,22 +34,22 @@ public class Camera
     public void Render(Hittable world)
     {
         Initialize();
-        ImageData = new Vector3[ImageHeight, this.ImageWidth];
+        ImageData = new Vector3d[ImageHeight, this.ImageWidth];
         for (int j = 0; j < ImageHeight; j++)
         {
             Console.WriteLine($"\rScanlines remaining: {ImageHeight - j}");
             for (int i = 0; i < ImageWidth; i++)
             {
-                Vector3 pixelCenter = Pixel00Loc + (i * PixelDeltaU) + (j * PixelDeltaV);
-                Vector3 rayDirection = pixelCenter - Center;
+                Vector3d pixelCenter = Pixel00Loc + (i * PixelDeltaU) + (j * PixelDeltaV);
+                Vector3d rayDirection = pixelCenter - Center;
                 //Ray r = new(Center, rayDirection);
-                Vector3 pixelColor = new(0.0f, 0.0f, 0.0f);
+                Vector3d pixelColor = new(0.0, 0.0, 0.0);
                 for (int sample = 0; sample < SamplesPerPixel; sample++)
                 {
                     Ray r = GetRay(i, j);
                     pixelColor += RayColor(r, world);
                 }
-                ImageData[j, i] = (float)PixelSamplesScale * pixelColor;
+                ImageData[j, i] = PixelSamplesScale * pixelColor;
             }
         }
     }
@@ -61,7 +61,7 @@ public class Camera
             Console.WriteLine("No image data to write to file.");
             return;
         }
-        Interval intensity = new(0.000f, 0.999f);
+        Interval intensity = new(0.000, 0.999);
         using (StreamWriter writeText = new StreamWriter(outFile))
         {
             writeText.WriteLine($"P3\n{ImageWidth} {ImageHeight}\n255\n");
@@ -87,45 +87,47 @@ public class Camera
         ImageHeight = (int)((double)ImageWidth / AspectRatio);
         ImageHeight = (ImageHeight < 1) ? 1 : ImageHeight;
 
-        Center = new Vector3(0.0f, 0.0f, 0.0f);
+        Center = new Vector3d(0.0, 0.0, 0.0);
 
         // Set up the camera
-        float focalLength = 1.0f;
-        float viewportHeight = 2.0f;
-        float viewportWidth = viewportHeight * (float)ImageWidth / (float)ImageHeight;
+        double focalLength = 1.0;
+        double viewportHeight = 2.0;
+        double viewportWidth = viewportHeight * (double)ImageWidth / (double)ImageHeight;
         Center = new(0.0f, 0.0f, 0.0f);
 
         // Calculate vectors across horizontal and down the vertical viewport edges
-        Vector3 viewportU = new(viewportWidth, 0.0f, 0.0f);
-        Vector3 viewportV = new(0.0f, -viewportHeight, 0.0f);
+        Vector3d viewportU = new(viewportWidth, 0.0f, 0.0f);
+        Vector3d viewportV = new(0.0f, (-viewportHeight), 0.0f);
 
         // Calculate the horizontal and vertical delta vectors from pixel to pixel
         PixelDeltaU = viewportU / ImageWidth;
         PixelDeltaV = viewportV / ImageHeight;
 
         // Calculate the location of the upper left pixel
-        Vector3 viewportUpperLeft = Center - new Vector3(0.0f, 0.0f, focalLength) - viewportU / 2.0f - viewportV / 2.0f;
-        Pixel00Loc = viewportUpperLeft + 0.5f * (PixelDeltaU + PixelDeltaV);
+        Vector3d viewportUpperLeft = Center - new Vector3d(0.0, 0.0, focalLength) - viewportU / 2.0 - viewportV / 2.0;
+        Pixel00Loc = viewportUpperLeft + 0.5 * (PixelDeltaU + PixelDeltaV);
 
         // For antialiasing
         PixelSamplesScale = 1.0 / SamplesPerPixel;
 
         // Set up the array to store the pixel colors
-        ImageData = new Vector3[ImageHeight, ImageWidth];
+        ImageData = new Vector3d[ImageHeight, ImageWidth];
     }
 
-    public static Vector3 RayColor(Ray r, Hittable world)
+    public Vector3d RayColor(Ray r, Hittable world)
     {
         // Check if the ray collides with anything
         HitRecord rec = new();
-        if (world.Hit(r, new Interval(0.0f, float.PositiveInfinity), rec))
+        if (world.Hit(r, new Interval(0.0, double.PositiveInfinity), rec))
         {
-            return 0.5f * (rec.Normal + new Vector3(1.0f, 1.0f, 1.0f));
+            //return 0.5 * (rec.Normal + new Vector3d(1.0, 1.0, 1.0));
+            Vector3d direction = Generator.RandomVectorOnHemisphere(rec.Normal);
+            return 0.5 * RayColor(new Ray(rec.P, direction), world);
         }
         // Didn't hit anything - return the "sky"
-        Vector3 unitDirection = RTUtility.UnitVector(r.Direction);
-        float a = 0.5f * (unitDirection.Y + 1.0f);
-        return (1.0f - a) * new Vector3(1.0f, 1.0f, 1.0f) + a * new Vector3(0.5f, 0.7f, 1.0f);
+        Vector3d unitDirection = RTUtility.UnitVector(r.Direction);
+        double a = 0.5 * (unitDirection.Y + 1.0);
+        return (1.0 - a) * new Vector3d(1.0, 1.0, 1.0) + a * new Vector3d(0.5, 0.7, 1.0);
     }
 
     private Ray GetRay(int i, int j)
@@ -137,9 +139,9 @@ public class Camera
         return new Ray(rayOrigin, rayDirection);
     }
 
-    private Vector3 SampleSquare()
+    private Vector3d SampleSquare()
     {
         // Returns the vector to a random point in the [-0.5,-0.5] to [+0.5,+0.5] unit square
-        return new Vector3(Generator.RandomFloat() - 0.5f, Generator.RandomFloat() - 0.5f, 0.0f);
+        return new Vector3d(Generator.RandomDouble() - 0.5f, Generator.RandomDouble() - 0.5, 0.0);
     }
 }

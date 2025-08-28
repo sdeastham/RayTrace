@@ -5,8 +5,8 @@ namespace RayTrace;
 
 public class Interval
 {
-    public float Min { get; private set; }
-    public float Max { get; private set; }
+    public double Min { get; private set; }
+    public double Max { get; private set; }
 
     public Interval()
     {
@@ -15,7 +15,7 @@ public class Interval
         Max = float.NegativeInfinity;
     }
 
-    public Interval(float min, float max)
+    public Interval(double min, double max)
     {
         Min = min;
         Max = max;
@@ -28,13 +28,13 @@ public class Interval
         return x;
     }
 
-    public float Size => Max - Min;
+    public double Size => Max - Min;
 
-    public bool Contains(float x) => Min <= x && x <= Max;
+    public bool Contains(double x) => Min <= x && x <= Max;
 
-    public bool Surrounds(float x) => Min < x && x < Max;
+    public bool Surrounds(double x) => Min < x && x < Max;
 
     public static readonly Interval empty = new();
-    public static readonly Interval universe = new(float.NegativeInfinity, float.PositiveInfinity);
+    public static readonly Interval universe = new(double.NegativeInfinity, double.PositiveInfinity);
 
 }

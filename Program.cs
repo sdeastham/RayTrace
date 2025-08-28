@@ -10,9 +10,9 @@ internal class Program
         // Set up the world
         HittableList world = new();
         // Sphere directly in front of the camera
-        world.Add(new Sphere(new Vector3(0.0f, 0.0f, -1.0f), 0.5f));
+        world.Add(new Sphere(new Vector3d(0.0, 0.0, -1.0), 0.5));
         // "Ground"
-        world.Add(new Sphere(new Vector3(0.0f, -100.5f, -1.0f), 100.0f));
+        world.Add(new Sphere(new Vector3d(0.0, -100.5, -1.0), 100.0));
 
         Camera cam = new()
         {

@@ -49,10 +49,10 @@ public class HittableList : Hittable
 public class HitRecord
 {
     // Tracks the most recent interaction between a ray and a surface
-    public Vector3 P, Normal;
-    public float T;
+    public Vector3d P, Normal;
+    public double T;
 
-    public HitRecord(Vector3 p, Vector3 normal, float t)
+    public HitRecord(Vector3d p, Vector3d normal, double t)
     {
         P = p;
         Normal = normal;
@@ -62,18 +62,18 @@ public class HitRecord
     public HitRecord()
     {
         // Default constructor - 
-        P = new Vector3(0.0f, 0.0f, 0.0f);
-        Normal = new Vector3(1.0f, 0.0f, 0.0f);
-        T = float.PositiveInfinity;
+        P = new Vector3d(0.0, 0.0, 0.0);
+        Normal = new Vector3d(1.0, 0.0, 0.0);
+        T = double.PositiveInfinity;
     }
 
     public bool FrontFace = false;
 
-    public void SetFaceNormal(Ray r, Vector3 outwardNormal)
+    public void SetFaceNormal(Ray r, Vector3d outwardNormal)
     {
         // Sets the hit record normal vector
         // Parameter outwardNormal is assumed to have unit length
-        FrontFace = Vector3.Dot(r.Direction, outwardNormal) < 0.0f;
+        FrontFace = Vector3d.Dot(r.Direction, outwardNormal) < 0.0f;
         // If the ray comes from outside
         Normal = FrontFace ? outwardNormal : -outwardNormal;
     }
@@ -84,17 +84,17 @@ public abstract class Hittable
     public abstract bool Hit(Ray r, Interval rayT, HitRecord rec);
 }
 
-public class Sphere(Vector3 center, float radius) : Hittable
+public class Sphere(Vector3d center, double radius) : Hittable
 {
-    public Vector3 Center { get; private set; } = center;
-    public float Radius { get; private set; } = Math.Max(0.0f,radius);
+    public Vector3d Center { get; private set; } = center;
+    public double Radius { get; private set; } = Math.Max(0.0,radius);
 
     public override bool Hit(Ray r, Interval rayT, HitRecord rec)
     {
-        Vector3 oc = Center - r.Origin;
-        var a = r.Direction.LengthSquared();
-        var h = Vector3.Dot(r.Direction, oc);
-        var c = oc.LengthSquared() - Radius * Radius;
+        Vector3d oc = Center - r.Origin;
+        var a = r.Direction.LengthSquared;
+        var h = Vector3d.Dot(r.Direction, oc);
+        var c = oc.LengthSquared - Radius * Radius;
         var discriminant = h * h - a * c;
         if (discriminant < 0)
         {
@@ -103,17 +103,17 @@ public class Sphere(Vector3 center, float radius) : Hittable
         var sqrtd = Math.Sqrt(discriminant);
         // Find the nearest root within the valid range
         var root = (h - sqrtd) / a;
-        if (!rayT.Surrounds((float)root))
+        if (!rayT.Surrounds(root))
         {
             root = (h + sqrtd) / a;
-            if (!rayT.Surrounds((float)root))
+            if (!rayT.Surrounds(root))
             {
                 return false;
             }
         }
         rec.T = (float)root;
         rec.P = r.At(rec.T);
-        Vector3 outwardNormal = (rec.P - Center) / Radius;
+        Vector3d outwardNormal = (rec.P - Center) / Radius;
         rec.SetFaceNormal(r, outwardNormal);
         return true;
     }
