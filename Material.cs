@@ -59,7 +59,7 @@ public class Dielectric(double refractiveIndex) : Material
         bool cannotRefract = ri * sinTheta > 1.0;
         Vector3d direction;
 
-        if (cannotRefract)
+        if (cannotRefract || Reflectance(cosTheta, ri) > generator.RandomDouble())
         {
             direction = Vector3d.Reflect(unitDirection, rec.Normal);
         }
@@ -69,5 +69,13 @@ public class Dielectric(double refractiveIndex) : Material
         }
         scattered.Overwrite(new Ray(rec.P, direction));
         return true;
+    }
+
+    private static double Reflectance(double cosine, double refractiveIndex)
+    {
+        // Use Schlick's approximation for reflectance
+        var r0 = (1.0 - refractiveIndex) / (1.0 + refractiveIndex);
+        r0 *= r0;
+        return r0 + (1.0 - r0) * Math.Pow(1.0 - cosine, 5.0);
     }
 }

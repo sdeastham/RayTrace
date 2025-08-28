@@ -1,5 +1,10 @@
-﻿using System.Net.NetworkInformation;
-using System.Numerics;
+﻿/*
+Ray tracing renderer
+
+Implements the v4.0.2 ray tracer of Shirley et al. (2025).
+https://raytracing.github.io/books/RayTracingInOneWeekend.html
+Retrieved: 2025-08-28
+*/
 
 namespace RayTrace;
 
@@ -19,7 +24,7 @@ internal class Program
         // "Ground"
         world.Add(new Sphere(new Vector3d(0.0, -100.5, -1.0), 100.0, materialGround));
         // Sphere directly in front of the camera
-        world.Add(new Sphere(new Vector3d( 0.0, 0.0, -1.2), 0.5, materialCenter));
+        world.Add(new Sphere(new Vector3d(0.0, 0.0, -1.2), 0.5, materialCenter));
         world.Add(new Sphere(new Vector3d(-1.0, 0.0, -1.0), 0.5, materialLeft));
         world.Add(new Sphere(new Vector3d(+1.0, 0.0, -1.0), 0.5, materialRight));
 
