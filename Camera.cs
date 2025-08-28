@@ -55,6 +55,16 @@ public class Camera
         }
     }
 
+    public static double LinearToGamma(double linearComponent)
+    {
+        // Apply gamma correction to the written image
+        if (linearComponent > 0.0)
+        {
+            return Math.Sqrt(linearComponent);
+        }
+        return 0.0;
+    }
+
     public void WriteToFile(string outFile = "image.ppm")
     {
         if (ImageData is null)
@@ -72,9 +82,13 @@ public class Camera
                 {
                     var rgb = ImageData[j, i];
 
-                    int ir = (int)(256 * intensity.Clamp(rgb.X));
-                    int ig = (int)(256 * intensity.Clamp(rgb.Y));
-                    int ib = (int)(256 * intensity.Clamp(rgb.Z));
+                    double r = LinearToGamma(rgb.X);
+                    double g = LinearToGamma(rgb.Y);
+                    double b = LinearToGamma(rgb.Z);
+
+                    int ir = (int)(256 * intensity.Clamp(r));
+                    int ig = (int)(256 * intensity.Clamp(g));
+                    int ib = (int)(256 * intensity.Clamp(b));
 
                     // Write out the actual data
                     writeText.WriteLine($"{ir} {ig} {ib}\n");
