@@ -103,10 +103,10 @@ public class Vector3d
 
     public static Vector3d Reflect(Vector3d v, Vector3d normal)
     {
-        return v - 2.0 * Vector3d.Dot(v, normal) * normal;
+        return v - 2.0 * Dot(v, normal) * normal;
     }
 
-    public Vector3d UnitVector(Vector3d v) => v / v.Length;
+    public Vector3d UnitVector => this / Length;
     public static double Dot(Vector3d v1, Vector3d v2) => v1.X * v2.X + v1.Y * v2.Y + v1.Z * v2.Z;
 
     // Operators
