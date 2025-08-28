@@ -128,8 +128,12 @@ public class Camera
         HitRecord rec = new();
         if (world.Hit(r, new Interval(0.001, double.PositiveInfinity), rec))
         {
+            // Show the Normal
             //return 0.5 * (rec.Normal + new Vector3d(1.0, 1.0, 1.0));
-            Vector3d direction = Generator.RandomVectorOnHemisphere(rec.Normal);
+            // Random reflection
+            //Vector3d direction = Generator.RandomVectorOnHemisphere(rec.Normal);
+            // Lambertian reflection
+            Vector3d direction = rec.Normal + Generator.RandomUnitVector();
             return 0.5 * RayColor(new Ray(rec.P, direction), depth - 1, world);
         }
         // Didn't hit anything - return the "sky"
