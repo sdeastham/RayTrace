@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Numerics;
+using System.Reflection;
 
 namespace RayTrace;
 
@@ -53,8 +54,20 @@ public class Dielectric(double refractiveIndex) : Material
         attenuation.Overwrite(new Vector3d(1.0, 1.0, 1.0));
         double ri = rec.FrontFace ? (1.0 / RefractiveIndex) : RefractiveIndex;
         Vector3d unitDirection = rIn.Direction.UnitVector;
-        Vector3d refracted = Vector3d.Refract(unitDirection, rec.Normal, ri);
-        scattered.Overwrite(new Ray(rec.P, refracted));
+        double cosTheta = Math.Min(Vector3d.Dot(-unitDirection, rec.Normal), 1.0);
+        double sinTheta = Math.Sqrt(1.0 - cosTheta * cosTheta);
+        bool cannotRefract = ri * sinTheta > 1.0;
+        Vector3d direction;
+
+        if (cannotRefract)
+        {
+            direction = Vector3d.Reflect(unitDirection, rec.Normal);
+        }
+        else
+        {
+            direction = Vector3d.Refract(unitDirection, rec.Normal, ri);
+        }
+        scattered.Overwrite(new Ray(rec.P, direction));
         return true;
     }
 }
