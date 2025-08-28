@@ -11,8 +11,8 @@ public class Interval
     public Interval()
     {
         // Default to an empty interval
-        Min = float.PositiveInfinity;
-        Max = float.NegativeInfinity;
+        Min = double.PositiveInfinity;
+        Max = double.NegativeInfinity;
     }
 
     public Interval(double min, double max)

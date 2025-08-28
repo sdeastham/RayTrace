@@ -18,7 +18,8 @@ internal class Program
         {
             ImageWidth = 400,
             AspectRatio = 16.0 / 9.0,
-            SamplesPerPixel = 100
+            SamplesPerPixel = 100,
+            MaxDepth = 50
         };
 
         cam.Render(world);

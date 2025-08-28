@@ -9,6 +9,7 @@ public class Camera
     public double AspectRatio = 1.0; // Width divided by height
     public int ImageWidth = 100; // Rendered image width in pixels
     public int SamplesPerPixel = 10; // Random samples to take for each pixel
+    public int MaxDepth = 10; // Maximum number of ray bounces into scene
 
     // Private
     private double PixelSamplesScale; // Scaling factor for a sum of pixel samples
@@ -47,7 +48,7 @@ public class Camera
                 for (int sample = 0; sample < SamplesPerPixel; sample++)
                 {
                     Ray r = GetRay(i, j);
-                    pixelColor += RayColor(r, world);
+                    pixelColor += RayColor(r, MaxDepth, world);
                 }
                 ImageData[j, i] = PixelSamplesScale * pixelColor;
             }
@@ -114,15 +115,20 @@ public class Camera
         ImageData = new Vector3d[ImageHeight, ImageWidth];
     }
 
-    public Vector3d RayColor(Ray r, Hittable world)
+    public Vector3d RayColor(Ray r, int depth, Hittable world)
     {
+        // If we've exceeded the bounce limit, no light gathered
+        if (depth <= 0)
+        {
+            return new Vector3d(0.0, 0.0, 0.0);
+        }
         // Check if the ray collides with anything
-        HitRecord rec = new();
+            HitRecord rec = new();
         if (world.Hit(r, new Interval(0.0, double.PositiveInfinity), rec))
         {
             //return 0.5 * (rec.Normal + new Vector3d(1.0, 1.0, 1.0));
             Vector3d direction = Generator.RandomVectorOnHemisphere(rec.Normal);
-            return 0.5 * RayColor(new Ray(rec.P, direction), world);
+            return 0.5 * RayColor(new Ray(rec.P, direction), depth-1, world);
         }
         // Didn't hit anything - return the "sky"
         Vector3d unitDirection = RTUtility.UnitVector(r.Direction);
