@@ -37,10 +37,7 @@ public class HittableList : Hittable
                 hitAnything = true;
                 closestSoFar = (float)tempRec.T;
                 // Update the "closest" hit
-                rec.T = tempRec.T;
-                rec.P = tempRec.P;
-                rec.Normal = tempRec.Normal;
-                rec.Mat = tempRec.Mat;
+                rec.Overwrite(tempRec);
             }
         }
         return hitAnything;
@@ -59,6 +56,7 @@ public class HitRecord
         P = p;
         Normal = normal;
         T = t;
+        Mat = null;
     }
 
     public HitRecord()
@@ -67,6 +65,7 @@ public class HitRecord
         P = new Vector3d(0.0, 0.0, 0.0);
         Normal = new Vector3d(1.0, 0.0, 0.0);
         T = double.PositiveInfinity;
+        Mat = null;
     }
 
     public bool FrontFace = false;
@@ -78,6 +77,15 @@ public class HitRecord
         FrontFace = Vector3d.Dot(r.Direction, outwardNormal) < 0.0f;
         // If the ray comes from outside
         Normal = FrontFace ? outwardNormal : -outwardNormal;
+    }
+
+    public void Overwrite(HitRecord rec)
+    {
+        P = rec.P;
+        T = rec.T;
+        Mat = rec.Mat;
+        Normal = rec.Normal;
+        FrontFace = rec.FrontFace;
     }
 }
 
