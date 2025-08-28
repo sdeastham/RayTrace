@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Numerics;
 
 namespace RayTrace;
@@ -38,6 +39,22 @@ public class Metal(Vector3d albedo, double fuzz) : Material
         reflected = reflected.UnitVector + (fuzz * generator.RandomUnitVector());
         scattered.Overwrite(new Ray(rec.P, reflected));
         attenuation.Overwrite(Albedo);
-        return Vector3d.Dot(scattered.Direction,rec.Normal) > 0.0;
+        return Vector3d.Dot(scattered.Direction, rec.Normal) > 0.0;
+    }
+}
+
+public class Dielectric(double refractiveIndex) : Material
+{
+    // Refractive index in vacuum or air, or the ratio of the material's
+    // refractive index over the refractive index of the enclosing media
+    private readonly double RefractiveIndex = refractiveIndex;
+    public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
+    {
+        attenuation.Overwrite(new Vector3d(1.0, 1.0, 1.0));
+        double ri = rec.FrontFace ? (1.0 / RefractiveIndex) : RefractiveIndex;
+        Vector3d unitDirection = rIn.Direction.UnitVector;
+        Vector3d refracted = Vector3d.Refract(unitDirection, rec.Normal, ri);
+        scattered.Overwrite(new Ray(rec.P, refracted));
+        return true;
     }
 }

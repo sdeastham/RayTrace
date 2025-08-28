@@ -37,6 +37,17 @@ public class Vector3d
         return v - 2.0 * Dot(v, normal) * normal;
     }
 
+    public static Vector3d Refract(Vector3d uv, Vector3d normal, double indexRatio)
+    {
+        // uv -- Incoming vector (must be unit vector)
+        // normal -- Surface normal
+        // indexRatio -- refractive index of the material divided by that of the enclosing mediua
+        var cosTheta = Math.Min(Dot(-uv, normal), 1.0);
+        Vector3d rOutPerp = indexRatio * (uv + cosTheta * normal);
+        Vector3d rOutParallel = -Math.Sqrt(Math.Abs(1.0 - rOutPerp.LengthSquared)) * normal;
+        return rOutPerp + rOutParallel;
+    }
+
     public Vector3d UnitVector => this / Length;
     public static double Dot(Vector3d v1, Vector3d v2) => v1.X * v2.X + v1.Y * v2.Y + v1.Z * v2.Z;
 
