@@ -32,7 +32,7 @@ public class HittableList : Hittable
         var closestSoFar = rayT.Max;
         foreach (Hittable tempObject in Objects)
         {
-            if (tempObject.Hit(r, new Interval(rayT.Min,closestSoFar), tempRec))
+            if (tempObject.Hit(r, new Interval(rayT.Min, closestSoFar), tempRec))
             {
                 hitAnything = true;
                 closestSoFar = (float)tempRec.T;
@@ -40,6 +40,7 @@ public class HittableList : Hittable
                 rec.T = tempRec.T;
                 rec.P = tempRec.P;
                 rec.Normal = tempRec.Normal;
+                rec.Mat = tempRec.Mat;
             }
         }
         return hitAnything;
@@ -51,6 +52,7 @@ public class HitRecord
     // Tracks the most recent interaction between a ray and a surface
     public Vector3d P, Normal;
     public double T;
+    public Material? Mat;
 
     public HitRecord(Vector3d p, Vector3d normal, double t)
     {
@@ -84,10 +86,11 @@ public abstract class Hittable
     public abstract bool Hit(Ray r, Interval rayT, HitRecord rec);
 }
 
-public class Sphere(Vector3d center, double radius) : Hittable
+public class Sphere(Vector3d center, double radius, Material mat) : Hittable
 {
     public Vector3d Center { get; private set; } = center;
     public double Radius { get; private set; } = Math.Max(0.0,radius);
+    public Material Mat { get; private set; } = mat;
 
     public override bool Hit(Ray r, Interval rayT, HitRecord rec)
     {
@@ -111,9 +114,10 @@ public class Sphere(Vector3d center, double radius) : Hittable
                 return false;
             }
         }
-        rec.T = (float)root;
+        rec.T = root;
         rec.P = r.At(rec.T);
         Vector3d outwardNormal = (rec.P - Center) / Radius;
+        rec.Mat = Mat;
         rec.SetFaceNormal(r, outwardNormal);
         return true;
     }

@@ -85,6 +85,27 @@ public class Vector3d
     public double LengthSquared => X * X + Y * Y + Z * Z;
     public double Length => Math.Sqrt(LengthSquared);
 
+    public void Overwrite(Vector3d v)
+    {
+        X = v.X;
+        Y = v.Y;
+        Z = v.Z;
+    }
+
+    public bool NearZero
+    {
+        get
+        {
+            double tolerance = 1.0e-8;
+            return (Math.Abs(X) < tolerance && Math.Abs(Y) < tolerance && Math.Abs(Z) < tolerance);
+        }
+    }
+
+    public static Vector3d Reflect(Vector3d v, Vector3d normal)
+    {
+        return v - 2.0 * Vector3d.Dot(v, normal) * normal;
+    }
+
     public Vector3d UnitVector(Vector3d v) => v / v.Length;
     public static double Dot(Vector3d v1, Vector3d v2) => v1.X * v2.X + v1.Y * v2.Y + v1.Z * v2.Z;
 

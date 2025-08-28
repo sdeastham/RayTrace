@@ -147,8 +147,17 @@ public class Camera
             // Random reflection
             //Vector3d direction = Generator.RandomVectorOnHemisphere(rec.Normal);
             // Lambertian reflection
-            Vector3d direction = rec.Normal + Generator.RandomUnitVector();
-            return 0.5 * RayColor(new Ray(rec.P, direction), depth - 1, world);
+            //Vector3d direction = rec.Normal + Generator.RandomUnitVector();
+            //return 0.5 * RayColor(new Ray(rec.P, direction), depth - 1, world);
+            // Scattering from different materials
+            Ray scattered = new(new Vector3d(0.0,0.0,0.0), new Vector3d(1.0,0.0,0.0));
+            Vector3d attenuation = new(0.0,0.0,0.0);
+            if (rec.Mat.Scatter(r, rec, attenuation, scattered, Generator))
+            {
+                return attenuation * RayColor(scattered, depth - 1, world);
+            }
+            // No light returned
+            return new(0.0, 0.0, 0.0);
         }
         // Didn't hit anything - return the "sky"
         Vector3d unitDirection = RTUtility.UnitVector(r.Direction);

@@ -12,4 +12,10 @@ public class Ray(Vector3d origin, Vector3d direction)
     {
         return Origin + t * Direction;
     }
+
+    public void Overwrite(Ray replacement)
+    {
+        Origin = replacement.Origin;
+        Direction = replacement.Direction;
+    }
 }
