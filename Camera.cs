@@ -160,7 +160,7 @@ public class Camera
             return new(0.0, 0.0, 0.0);
         }
         // Didn't hit anything - return the "sky"
-        Vector3d unitDirection = RTUtility.UnitVector(r.Direction);
+        Vector3d unitDirection = r.Direction.UnitVector;
         double a = 0.5 * (unitDirection.Y + 1.0);
         return (1.0 - a) * new Vector3d(1.0, 1.0, 1.0) + a * new Vector3d(0.5, 0.7, 1.0);
     }
