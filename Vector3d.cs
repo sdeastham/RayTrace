@@ -51,6 +51,14 @@ public class Vector3d
     public Vector3d UnitVector => this / Length;
     public static double Dot(Vector3d v1, Vector3d v2) => v1.X * v2.X + v1.Y * v2.Y + v1.Z * v2.Z;
 
+    public static Vector3d Cross(Vector3d v1, Vector3d v2)
+    {
+        double e1 = v1.Y * v2.Z - v1.Z * v2.Y;
+        double e2 = v1.Z * v2.X - v1.X * v2.Z;
+        double e3 = v1.X * v2.Y - v1.Y * v2.X;
+        return new(e1, e2, e3);
+    }
+
     // Operators
     public static Vector3d operator +(Vector3d v, double d) => new(v.X + d, v.Y + d, v.Z + d);
     public static Vector3d operator +(double d, Vector3d v) => v + d;

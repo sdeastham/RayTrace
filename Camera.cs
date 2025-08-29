@@ -12,6 +12,10 @@ public class Camera
     public int SamplesPerPixel = 10; // Random samples to take for each pixel
     public int MaxDepth = 10; // Maximum number of ray bounces into scene
     public double VerticalFOV = 90.0; // Vertical view angle (field of view)
+    public Vector3d LookFrom = new(0.0, 0.0, 0.0); // Point camera is looking from
+    public Vector3d LookAt = new(0.0, 0.0, -1.0); // Point camera is looking at
+    public Vector3d UpVector = new(0.0, 1.0, 0.0); // Camera-relative "up" direction
+
 
     // Private
     private double PixelSamplesScale; // Scaling factor for a sum of pixel samples
@@ -20,6 +24,7 @@ public class Camera
     private Vector3d? Pixel00Loc; // Location of pixel 0,0
     private Vector3d? PixelDeltaU; // Offset between pixels (horizontal)
     private Vector3d? PixelDeltaV; // Offset between pixels (vertical)
+    private Vector3d UBasis, VBasis, WBasis; // Camera frame basis vectors
     private Vector3d[,]? ImageData;
     private readonly RTRandom Generator = new();
 
@@ -121,26 +126,30 @@ public class Camera
         ImageHeight = (int)((double)ImageWidth / AspectRatio);
         ImageHeight = (ImageHeight < 1) ? 1 : ImageHeight;
 
-        Center = new Vector3d(0.0, 0.0, 0.0);
+        Center = LookFrom;
 
-        // Set up the camera
-        double focalLength = 1.0;
+        // Set up the camera and determine viewport dimensions
+        double focalLength = (LookFrom - LookAt).Length;
         double theta = VerticalFOV * Math.PI / 180.0;
         double h = Math.Tan(theta / 2.0);
         double viewportHeight = 2.0 * h * focalLength;
         double viewportWidth = viewportHeight * (double)ImageWidth / (double)ImageHeight;
-        Center = new(0.0f, 0.0f, 0.0f);
+
+        // Calculate the u, v, w unit basis vectors for the camera coordinate frame
+        WBasis = (LookFrom - LookAt).UnitVector;
+        UBasis = Vector3d.Cross(UpVector, WBasis).UnitVector;
+        VBasis = Vector3d.Cross(WBasis, UBasis);
 
         // Calculate vectors across horizontal and down the vertical viewport edges
-        Vector3d viewportU = new(viewportWidth, 0.0f, 0.0f);
-        Vector3d viewportV = new(0.0f, (-viewportHeight), 0.0f);
+        Vector3d viewportU = viewportWidth * UBasis;
+        Vector3d viewportV = viewportHeight * -VBasis;
 
         // Calculate the horizontal and vertical delta vectors from pixel to pixel
         PixelDeltaU = viewportU / ImageWidth;
         PixelDeltaV = viewportV / ImageHeight;
 
         // Calculate the location of the upper left pixel
-        Vector3d viewportUpperLeft = Center - new Vector3d(0.0, 0.0, focalLength) - viewportU / 2.0 - viewportV / 2.0;
+        Vector3d viewportUpperLeft = Center - (focalLength * WBasis) - viewportU / 2.0 - viewportV / 2.0;
         Pixel00Loc = viewportUpperLeft + 0.5 * (PixelDeltaU + PixelDeltaV);
 
         // For antialiasing

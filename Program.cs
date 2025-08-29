@@ -18,7 +18,6 @@ internal class Program
         // Set up the world
         HittableList world = new();
 
-        /*
         // Set up the materials
         Material materialGround = new Lambertian(new Vector3d(0.8, 0.8, 0.0));
         Material materialCenter = new Lambertian(new Vector3d(0.1, 0.2, 0.5));
@@ -33,14 +32,13 @@ internal class Program
         world.Add(new Sphere(new Vector3d(-1.0, 0.0, -1.0), 0.5, materialLeft));
         world.Add(new Sphere(new Vector3d(+1.0, 0.0, -1.0), 0.5, materialRight));
         world.Add(new Sphere(new Vector3d(-1.0, 0.0, -1.0), 0.4, materialBubble));
-        */
 
-        double R = Math.Cos(Math.PI / 4.0);
-        Material materialLeft  = new Lambertian(new Vector3d(0.0, 0.0, 1.0));
-        Material materialRight = new Lambertian(new Vector3d(1.0, 0.0, 0.0));
+        //double R = Math.Cos(Math.PI / 4.0);
+        //Material materialLeft  = new Lambertian(new Vector3d(0.0, 0.0, 1.0));
+        //Material materialRight = new Lambertian(new Vector3d(1.0, 0.0, 0.0));
 
-        world.Add(new Sphere(new Vector3d(-R, 0, -1.0), R, materialLeft));
-        world.Add(new Sphere(new Vector3d( R, 0, -1.0), R, materialRight));
+        //world.Add(new Sphere(new Vector3d(-R, 0, -1.0), R, materialLeft));
+        //world.Add(new Sphere(new Vector3d( R, 0, -1.0), R, materialRight));
 
         Camera cam = new()
         {
@@ -48,7 +46,10 @@ internal class Program
             AspectRatio = 16.0 / 9.0,
             SamplesPerPixel = 100,
             MaxDepth = 50,
-            VerticalFOV = 90.0,
+            VerticalFOV = 20.0,
+            LookAt = new Vector3d(0, 0, -1.0),
+            LookFrom = new Vector3d(-2.0, 2.0, 1.0),
+            UpVector = new Vector3d(0.0,1.0,0.0),
         };
         Stopwatch stopwatch = new();
         stopwatch.Start();
