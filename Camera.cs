@@ -11,14 +11,15 @@ public class Camera
     public int ImageWidth = 100; // Rendered image width in pixels
     public int SamplesPerPixel = 10; // Random samples to take for each pixel
     public int MaxDepth = 10; // Maximum number of ray bounces into scene
+    public double VerticalFOV = 90.0; // Vertical view angle (field of view)
 
     // Private
     private double PixelSamplesScale; // Scaling factor for a sum of pixel samples
     private int ImageHeight; // Rendered image height in pixels
-    private Vector3d Center; // Camera center location
-    private Vector3d Pixel00Loc; // Location of pixel 0,0
-    private Vector3d PixelDeltaU; // Offset between pixels (horizontal)
-    private Vector3d PixelDeltaV; // Offset between pixels (vertical)
+    private Vector3d? Center; // Camera center location
+    private Vector3d? Pixel00Loc; // Location of pixel 0,0
+    private Vector3d? PixelDeltaU; // Offset between pixels (horizontal)
+    private Vector3d? PixelDeltaV; // Offset between pixels (vertical)
     private Vector3d[,]? ImageData;
     private readonly RTRandom Generator = new();
 
@@ -47,6 +48,11 @@ public class Camera
     public void Render(Hittable world)
     {
         Initialize();
+        if (ImageData is null)
+        {
+            Console.WriteLine("ImageData field has not been initialized; aborting.");
+            return;
+        }
         int totalIterations = ImageHeight * ImageWidth;
         int completedIterations = 0;
         Console.Clear();
@@ -119,7 +125,9 @@ public class Camera
 
         // Set up the camera
         double focalLength = 1.0;
-        double viewportHeight = 2.0;
+        double theta = VerticalFOV * Math.PI / 180.0;
+        double h = Math.Tan(theta / 2.0);
+        double viewportHeight = 2.0 * h * focalLength;
         double viewportWidth = viewportHeight * (double)ImageWidth / (double)ImageHeight;
         Center = new(0.0f, 0.0f, 0.0f);
 
