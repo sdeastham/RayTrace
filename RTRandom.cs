@@ -57,4 +57,16 @@ public class RTRandom
             return -onUnitSphere;
         }
     }
+
+    public Vector3d RandomVectorInUnitDisk()
+    {
+        while (true)
+        {
+            Vector3d p = new(RandomDouble(-1.0, 1.0), RandomDouble(-1.0, 1.0), 0.0);
+            if (p.LengthSquared < 1.0)
+            {
+                return p;
+            }
+        }
+    }
 }

@@ -49,7 +49,9 @@ internal class Program
             VerticalFOV = 20.0,
             LookAt = new Vector3d(0, 0, -1.0),
             LookFrom = new Vector3d(-2.0, 2.0, 1.0),
-            UpVector = new Vector3d(0.0,1.0,0.0),
+            UpVector = new Vector3d(0.0, 1.0, 0.0),
+            DefocusAngle = 10.0,
+            FocusDist = 3.4,
         };
         Stopwatch stopwatch = new();
         stopwatch.Start();

@@ -15,6 +15,8 @@ public class Camera
     public Vector3d LookFrom = new(0.0, 0.0, 0.0); // Point camera is looking from
     public Vector3d LookAt = new(0.0, 0.0, -1.0); // Point camera is looking at
     public Vector3d UpVector = new(0.0, 1.0, 0.0); // Camera-relative "up" direction
+    public double DefocusAngle = 0.0; // Variation angle of rays through each pixel
+    public double FocusDist = 10.0; // Distance from camera LookFrom point to the plane of perfect focus
 
 
     // Private
@@ -25,6 +27,8 @@ public class Camera
     private Vector3d? PixelDeltaU; // Offset between pixels (horizontal)
     private Vector3d? PixelDeltaV; // Offset between pixels (vertical)
     private Vector3d UBasis, VBasis, WBasis; // Camera frame basis vectors
+    private Vector3d DefocusDiskU; // Defocus disk horizontal radius
+    private Vector3d DefocusDiskV; // Defocus disk vertical radius
     private Vector3d[,]? ImageData;
     private readonly RTRandom Generator = new();
 
@@ -129,10 +133,10 @@ public class Camera
         Center = LookFrom;
 
         // Set up the camera and determine viewport dimensions
-        double focalLength = (LookFrom - LookAt).Length;
+        //double focalLength = (LookFrom - LookAt).Length;
         double theta = VerticalFOV * Math.PI / 180.0;
         double h = Math.Tan(theta / 2.0);
-        double viewportHeight = 2.0 * h * focalLength;
+        double viewportHeight = 2.0 * h * FocusDist;
         double viewportWidth = viewportHeight * (double)ImageWidth / (double)ImageHeight;
 
         // Calculate the u, v, w unit basis vectors for the camera coordinate frame
@@ -149,8 +153,13 @@ public class Camera
         PixelDeltaV = viewportV / ImageHeight;
 
         // Calculate the location of the upper left pixel
-        Vector3d viewportUpperLeft = Center - (focalLength * WBasis) - viewportU / 2.0 - viewportV / 2.0;
+        Vector3d viewportUpperLeft = Center - (FocusDist * WBasis) - viewportU / 2.0 - viewportV / 2.0;
         Pixel00Loc = viewportUpperLeft + 0.5 * (PixelDeltaU + PixelDeltaV);
+
+        // Calculate the camera defocus disk basis vectors
+        double defocusRadius = FocusDist * Math.Tan((DefocusAngle / 2.0) * Math.PI / 180.0);
+        DefocusDiskU = UBasis * defocusRadius;
+        DefocusDiskV = VBasis * defocusRadius;
 
         // For antialiasing
         PixelSamplesScale = 1.0 / SamplesPerPixel;
@@ -197,9 +206,11 @@ public class Camera
 
     private Ray GetRay(int i, int j)
     {
+        // Construct a camera ray originating from the defocus disk and directed at
+        // a randomly-sampled point around the pixel location i, j
         var offset = SampleSquare();
         var pixelSample = Pixel00Loc + ((i + offset.X) * PixelDeltaU) + ((j + offset.Y) * PixelDeltaV);
-        var rayOrigin = Center;
+        var rayOrigin = (DefocusAngle <= 0.0) ? Center : DefocusDiskSample();
         var rayDirection = pixelSample - rayOrigin;
         return new Ray(rayOrigin, rayDirection);
     }
@@ -208,5 +219,11 @@ public class Camera
     {
         // Returns the vector to a random point in the [-0.5,-0.5] to [+0.5,+0.5] unit square
         return new Vector3d(Generator.RandomDouble() - 0.5f, Generator.RandomDouble() - 0.5, 0.0);
+    }
+
+    private Vector3d DefocusDiskSample()
+    {
+        Vector3d p = Generator.RandomVectorInUnitDisk();
+        return Center + (p.X * DefocusDiskU) + (p.Y * DefocusDiskV);
     }
 }
