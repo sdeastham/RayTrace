@@ -47,16 +47,25 @@ public class Camera
     public void Render(Hittable world)
     {
         Initialize();
-        Console.WriteLine($"{ImageData is null} << NULL?");
-        List<Task> listOfTasks = [];
-        for (int j = 0; j < ImageHeight; j++)
+        int totalIterations = ImageHeight * ImageWidth;
+        int completedIterations = 0;
+        Console.Clear();
+        Console.WriteLine($"Beginning render ({totalIterations} pixels).");
+        Parallel.For(0, totalIterations, ij =>
         {
-            Console.WriteLine($"\rScanlines remaining: {ImageHeight - j}");
-            Parallel.For(0, ImageWidth, i =>
+            int i = ij % ImageWidth;
+            int j = ij / ImageWidth; // Integer division
+            ImageData[j, i] = RenderSingle(i, j, world);
+            Interlocked.Increment(ref completedIterations);
+            if (completedIterations % 1000 == 0)
             {
-                ImageData[j, i] = RenderSingle(i, j, world);
-            });
-        }
+                Console.SetCursorPosition(0, 1);
+                Console.Write(new string(' ', Console.WindowWidth));
+                Console.SetCursorPosition(0, 1);
+                Console.Write($"Progress: {completedIterations:D6}/{totalIterations:D6} ({((double)completedIterations / totalIterations) * 100:F1}%)");
+            }
+        });
+        Console.Write("\n");
     }
 
     public static double LinearToGamma(double linearComponent)
