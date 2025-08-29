@@ -6,11 +6,14 @@ https://raytracing.github.io/books/RayTracingInOneWeekend.html
 Retrieved: 2025-08-28
 */
 
+using System.Diagnostics;
+using System.Threading.Tasks;
+
 namespace RayTrace;
 
 internal class Program
 {
-    private static void Main(string[] args)
+    private static async Task Main(string[] args)
     {
         // Set up the world
         HittableList world = new();
@@ -37,8 +40,11 @@ internal class Program
             SamplesPerPixel = 100,
             MaxDepth = 50
         };
-
+        Stopwatch stopwatch = new();
+        stopwatch.Start();
         cam.Render(world);
+        stopwatch.Stop();
+        Console.WriteLine($"Elapsed time: {stopwatch.ElapsedMilliseconds * 0.001} s");
         cam.WriteToFile("image.ppm");
     }
 }

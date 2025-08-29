@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace RayTrace;
 
@@ -32,26 +33,29 @@ public class Camera
         AspectRatio = aspectRatio;
     }
 
+    public Vector3d RenderSingle(int i, int j, Hittable world)
+    {
+        Vector3d pixelColor = new(0.0, 0.0, 0.0);
+        for (int sample = 0; sample < SamplesPerPixel; sample++)
+        {
+            Ray r = GetRay(i, j);
+            pixelColor += RayColor(r, MaxDepth, world);
+        }
+        return PixelSamplesScale * pixelColor;
+    }
+
     public void Render(Hittable world)
     {
         Initialize();
-        ImageData = new Vector3d[ImageHeight, this.ImageWidth];
+        Console.WriteLine($"{ImageData is null} << NULL?");
+        List<Task> listOfTasks = [];
         for (int j = 0; j < ImageHeight; j++)
         {
             Console.WriteLine($"\rScanlines remaining: {ImageHeight - j}");
-            for (int i = 0; i < ImageWidth; i++)
+            Parallel.For(0, ImageWidth, i =>
             {
-                Vector3d pixelCenter = Pixel00Loc + (i * PixelDeltaU) + (j * PixelDeltaV);
-                Vector3d rayDirection = pixelCenter - Center;
-                //Ray r = new(Center, rayDirection);
-                Vector3d pixelColor = new(0.0, 0.0, 0.0);
-                for (int sample = 0; sample < SamplesPerPixel; sample++)
-                {
-                    Ray r = GetRay(i, j);
-                    pixelColor += RayColor(r, MaxDepth, world);
-                }
-                ImageData[j, i] = PixelSamplesScale * pixelColor;
-            }
+                ImageData[j, i] = RenderSingle(i, j, world);
+            });
         }
     }
 
@@ -150,8 +154,8 @@ public class Camera
             //Vector3d direction = rec.Normal + Generator.RandomUnitVector();
             //return 0.5 * RayColor(new Ray(rec.P, direction), depth - 1, world);
             // Scattering from different materials
-            Ray scattered = new(new Vector3d(0.0,0.0,0.0), new Vector3d(1.0,0.0,0.0));
-            Vector3d attenuation = new(0.0,0.0,0.0);
+            Ray scattered = new(new Vector3d(0.0, 0.0, 0.0), new Vector3d(1.0, 0.0, 0.0));
+            Vector3d attenuation = new(0.0, 0.0, 0.0);
             if (rec.Mat.Scatter(r, rec, attenuation, scattered, Generator))
             {
                 return attenuation * RayColor(scattered, depth - 1, world);
