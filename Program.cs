@@ -7,6 +7,7 @@ Retrieved: 2025-08-28
 */
 
 using System.Diagnostics;
+using System.Numerics;
 using System.Threading.Tasks;
 
 namespace RayTrace;
@@ -19,6 +20,7 @@ internal class Program
         HittableList world = new();
 
         // Set up the materials
+        /*
         Material materialGround = new Lambertian(new Vector3d(0.8, 0.8, 0.0));
         Material materialCenter = new Lambertian(new Vector3d(0.1, 0.2, 0.5));
         Material materialLeft = new Dielectric(1.5);
@@ -32,26 +34,80 @@ internal class Program
         world.Add(new Sphere(new Vector3d(-1.0, 0.0, -1.0), 0.5, materialLeft));
         world.Add(new Sphere(new Vector3d(+1.0, 0.0, -1.0), 0.5, materialRight));
         world.Add(new Sphere(new Vector3d(-1.0, 0.0, -1.0), 0.4, materialBubble));
+        */
 
-        //double R = Math.Cos(Math.PI / 4.0);
-        //Material materialLeft  = new Lambertian(new Vector3d(0.0, 0.0, 1.0));
-        //Material materialRight = new Lambertian(new Vector3d(1.0, 0.0, 0.0));
+        /*
+        double R = Math.Cos(Math.PI / 4.0);
+        Material materialLeft  = new Lambertian(new Vector3d(0.0, 0.0, 1.0));
+        Material materialRight = new Lambertian(new Vector3d(1.0, 0.0, 0.0));
 
-        //world.Add(new Sphere(new Vector3d(-R, 0, -1.0), R, materialLeft));
-        //world.Add(new Sphere(new Vector3d( R, 0, -1.0), R, materialRight));
+        world.Add(new Sphere(new Vector3d(-R, 0, -1.0), R, materialLeft));
+        world.Add(new Sphere(new Vector3d( R, 0, -1.0), R, materialRight));
+        */
+
+        Material groundMaterial = new Lambertian(new Vector3d(0.5, 0.5, 0.5));
+        world.Add(new Sphere(new Vector3d(0, -1000.0, 0), 1000.0, groundMaterial));
+
+        Random sphereGen = new();
+
+        for (int a = -11; a < 11; a++)
+        {
+            for (int b = -11; b < 11; b++)
+            {
+                double chooseMat = sphereGen.NextDouble();
+                Vector3d center = new(a + 0.9 * sphereGen.NextDouble(), 0.2, b + 0.9 * sphereGen.NextDouble());
+                if ((center - new Vector3d(4, 0.2, 0)).Length > 0.9)
+                {
+                    Material sphereMaterial;
+                    if (chooseMat < 0.8)
+                    {
+                        // Diffuse sphere
+                        var albedo = new Vector3d(sphereGen.NextDouble() * sphereGen.NextDouble(),
+                                                    sphereGen.NextDouble() * sphereGen.NextDouble(),
+                                                    sphereGen.NextDouble() * sphereGen.NextDouble());
+                        sphereMaterial = new Lambertian(albedo);
+                    }
+                    else if (chooseMat < 0.95)
+                    {
+                        // Metal
+                        // Diffuse sphere
+                        var albedo = new Vector3d(sphereGen.NextDouble() * 0.5 + 0.5,
+                                                    sphereGen.NextDouble() * 0.5 + 0.5,
+                                                    sphereGen.NextDouble() * 0.5 + 0.5);
+                        var fuzz = sphereGen.NextDouble() * 0.5;
+                        sphereMaterial = new Metal(albedo, fuzz);
+                    }
+                    else
+                    {
+                        // Glass
+                        sphereMaterial = new Dielectric(1.5);
+                    }
+                    world.Add(new Sphere(center, 0.2, sphereMaterial));
+                }
+            }
+        }
+
+        Material mat1 = new Dielectric(1.5);
+        world.Add(new Sphere(new Vector3d(0, 1, 0), 1.0, mat1));
+
+        Material mat2 = new Lambertian(new Vector3d(0.4, 0.2, 0.1));
+        world.Add(new Sphere(new Vector3d(-4, 1, 0), 1.0, mat2));
+
+        Material mat3 = new Metal(new Vector3d(0.7, 0.6, 0.5), 0.0);
+        world.Add(new Sphere(new Vector3d(4, 1, 0), 1.0, mat3));
 
         Camera cam = new()
         {
-            ImageWidth = 400,
+            ImageWidth = 1200,
             AspectRatio = 16.0 / 9.0,
-            SamplesPerPixel = 100,
+            SamplesPerPixel = 50,
             MaxDepth = 50,
             VerticalFOV = 20.0,
-            LookAt = new Vector3d(0, 0, -1.0),
-            LookFrom = new Vector3d(-2.0, 2.0, 1.0),
+            LookAt = new Vector3d(0, 0, 0),
+            LookFrom = new Vector3d(13.0, 2.0, 3.0),
             UpVector = new Vector3d(0.0, 1.0, 0.0),
-            DefocusAngle = 10.0,
-            FocusDist = 3.4,
+            DefocusAngle = 0.6,
+            FocusDist = 10.0,
         };
         Stopwatch stopwatch = new();
         stopwatch.Start();

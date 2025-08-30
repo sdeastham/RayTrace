@@ -72,7 +72,7 @@ public class Camera
             int j = ij / ImageWidth; // Integer division
             ImageData[j, i] = RenderSingle(i, j, world);
             Interlocked.Increment(ref completedIterations);
-            if (completedIterations % 1000 == 0)
+            if (completedIterations % 100 == 0)
             {
                 Console.SetCursorPosition(0, 1);
                 Console.Write(new string(' ', Console.WindowWidth));
