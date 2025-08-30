@@ -98,9 +98,9 @@ internal class Program
 
         Camera cam = new()
         {
-            ImageWidth = 1200,
+            ImageWidth = 400,
             AspectRatio = 16.0 / 9.0,
-            SamplesPerPixel = 50,
+            SamplesPerPixel = 10,
             MaxDepth = 50,
             VerticalFOV = 20.0,
             LookAt = new Vector3d(0, 0, 0),
@@ -114,6 +114,6 @@ internal class Program
         cam.Render(world);
         stopwatch.Stop();
         Console.WriteLine($"Elapsed time: {stopwatch.ElapsedMilliseconds * 0.001} s");
-        cam.WriteToFile("image.ppm");
+        cam.WriteToPNG("image.png");
     }
 }

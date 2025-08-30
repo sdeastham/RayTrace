@@ -1,6 +1,9 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace RayTrace;
 
@@ -93,7 +96,41 @@ public class Camera
         return 0.0;
     }
 
-    public void WriteToFile(string outFile = "image.ppm")
+    public void WriteToPNG(string outfile = "image.png")
+    {
+        if (ImageData is null)
+        {
+            Console.WriteLine("No image data to write to file.");
+            return;
+        }
+        Interval intensity = new(0.000, 0.999);
+
+        // Use SixLabors instead of the Bitmap class from System.Drawing
+        // This provides better cross-platform compatibility, as Bitmap
+        // only works on Windows.
+        using var image = new Image<Rgba32>(ImageWidth, ImageHeight);
+        for (int j = 0; j < ImageHeight; j++)
+        {
+            for (int i = 0; i < ImageWidth; i++)
+            {
+                var rgb = ImageData[j, i];
+
+                double r = LinearToGamma(rgb.X);
+                double g = LinearToGamma(rgb.Y);
+                double b = LinearToGamma(rgb.Z);
+
+                int ir = (int)(256 * intensity.Clamp(r));
+                int ig = (int)(256 * intensity.Clamp(g));
+                int ib = (int)(256 * intensity.Clamp(b));
+
+                // Write out the actual data
+                image[i, j] = new Rgba32((byte)ir, (byte)ig, (byte)ib, 255);
+            }
+        }
+        image.Save(outfile);
+    }
+
+    public void WriteToPPM(string outFile = "image.ppm")
     {
         if (ImageData is null)
         {
