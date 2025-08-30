@@ -94,15 +94,30 @@ public abstract class Hittable
     public abstract bool Hit(Ray r, Interval rayT, HitRecord rec);
 }
 
-public class Sphere(Vector3d center, double radius, Material mat) : Hittable
+public class Sphere : Hittable
 {
-    public Vector3d Center { get; private set; } = center;
-    public double Radius { get; private set; } = Math.Max(0.0,radius);
-    public Material Mat { get; private set; } = mat;
+    public Ray Center { get; private set; }
+    public double Radius { get; private set; }
+    public Material Mat { get; private set; }
+
+    public Sphere(Vector3d center, double radius, Material mat)
+    {
+        Center = new(center, new Vector3d(0, 0, 0));
+        Radius = Math.Max(0.0, radius);
+        Mat = mat;
+    }
+
+    public Sphere(Vector3d center1, Vector3d center2, double radius, Material mat)
+    {
+        Center = new(center1, center2 - center1);
+        Radius = Math.Max(0.0, radius);
+        Mat = mat;
+    }
 
     public override bool Hit(Ray r, Interval rayT, HitRecord rec)
     {
-        Vector3d oc = Center - r.Origin;
+        Vector3d currentCenter = Center.At(r.Time);
+        Vector3d oc = currentCenter - r.Origin;
         var a = r.Direction.LengthSquared;
         var h = Vector3d.Dot(r.Direction, oc);
         var c = oc.LengthSquared - Radius * Radius;
@@ -124,7 +139,7 @@ public class Sphere(Vector3d center, double radius, Material mat) : Hittable
         }
         rec.T = root;
         rec.P = r.At(rec.T);
-        Vector3d outwardNormal = (rec.P - Center) / Radius;
+        Vector3d outwardNormal = (rec.P - currentCenter) / Radius;
         rec.Mat = Mat;
         rec.SetFaceNormal(r, outwardNormal);
         return true;

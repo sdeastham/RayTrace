@@ -8,6 +8,7 @@ Retrieved: 2025-08-28
 
 using System.Diagnostics;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace RayTrace;
@@ -56,6 +57,7 @@ internal class Program
             {
                 double chooseMat = sphereGen.NextDouble();
                 Vector3d center = new(a + 0.9 * sphereGen.NextDouble(), 0.2, b + 0.9 * sphereGen.NextDouble());
+                Vector3d center2 = center;
                 if ((center - new Vector3d(4, 0.2, 0)).Length > 0.9)
                 {
                     Material sphereMaterial;
@@ -66,6 +68,7 @@ internal class Program
                                                     sphereGen.NextDouble() * sphereGen.NextDouble(),
                                                     sphereGen.NextDouble() * sphereGen.NextDouble());
                         sphereMaterial = new Lambertian(albedo);
+                        center2 = center + new Vector3d(0, sphereGen.NextDouble() * 0.5, 0);
                     }
                     else if (chooseMat < 0.95)
                     {
@@ -82,7 +85,7 @@ internal class Program
                         // Glass
                         sphereMaterial = new Dielectric(1.5);
                     }
-                    world.Add(new Sphere(center, 0.2, sphereMaterial));
+                    world.Add(new Sphere(center, center2, 0.2, sphereMaterial));
                 }
             }
         }

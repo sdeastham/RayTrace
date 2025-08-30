@@ -23,7 +23,7 @@ public class Lambertian(Vector3d albedo) : Material
         var scatterDirection = rec.Normal + generator.RandomUnitVector();
         // Catch degenerate scatter direction
         if (scatterDirection.NearZero) scatterDirection = rec.Normal;
-        scattered.Overwrite(new Ray(rec.P, scatterDirection));
+        scattered.Overwrite(new Ray(rec.P, scatterDirection, rIn.Time));
         attenuation.Overwrite(Albedo);
         return true;
     }
@@ -37,8 +37,8 @@ public class Metal(Vector3d albedo, double fuzz) : Material
     public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
     {
         Vector3d reflected = Vector3d.Reflect(rIn.Direction, rec.Normal);
-        reflected = reflected.UnitVector + (fuzz * generator.RandomUnitVector());
-        scattered.Overwrite(new Ray(rec.P, reflected));
+        reflected = reflected.UnitVector + (Fuzz * generator.RandomUnitVector());
+        scattered.Overwrite(new Ray(rec.P, reflected, rIn.Time));
         attenuation.Overwrite(Albedo);
         return Vector3d.Dot(scattered.Direction, rec.Normal) > 0.0;
     }
@@ -67,7 +67,7 @@ public class Dielectric(double refractiveIndex) : Material
         {
             direction = Vector3d.Refract(unitDirection, rec.Normal, ri);
         }
-        scattered.Overwrite(new Ray(rec.P, direction));
+        scattered.Overwrite(new Ray(rec.P, direction, rIn.Time));
         return true;
     }
 

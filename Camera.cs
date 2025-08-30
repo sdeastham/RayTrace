@@ -247,9 +247,10 @@ public class Camera
         // a randomly-sampled point around the pixel location i, j
         var offset = SampleSquare();
         var pixelSample = Pixel00Loc + ((i + offset.X) * PixelDeltaU) + ((j + offset.Y) * PixelDeltaV);
-        var rayOrigin = (DefocusAngle <= 0.0) ? Center : DefocusDiskSample();
+        Vector3d rayOrigin = (DefocusAngle <= 0.0) ? Center : DefocusDiskSample();
         var rayDirection = pixelSample - rayOrigin;
-        return new Ray(rayOrigin, rayDirection);
+        double rayTime = Generator.RandomDouble();
+        return new Ray(rayOrigin, rayDirection, rayTime);
     }
 
     private Vector3d SampleSquare()
