@@ -5,8 +5,8 @@ namespace RayTrace;
 
 public class Interval
 {
-    public double Min { get; private set; }
-    public double Max { get; private set; }
+    public double Min { get; set; }
+    public double Max { get; set; }
 
     public Interval()
     {
@@ -21,11 +21,24 @@ public class Interval
         Max = max;
     }
 
+    public Interval(Interval a, Interval b)
+    {
+        // Create the interval tightly enclosing the two input intervals
+        Min = a.Min <= b.Min ? a.Min : b.Min;
+        Max = a.Max >= b.Max ? a.Max : b.Max;
+    }
+
     public double Clamp(double x)
     {
         if (x < Min) return Min;
         if (x > Max) return Max;
         return x;
+    }
+
+    public Interval Expand(double delta)
+    {
+        double padding = delta / 2.0;
+        return new Interval(Min-padding,Max+padding);
     }
 
     public double Size => Max - Min;

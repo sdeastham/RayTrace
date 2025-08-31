@@ -99,6 +99,8 @@ internal class Program
         Material mat3 = new Metal(new Vector3d(0.7, 0.6, 0.5), 0.0);
         world.Add(new Sphere(new Vector3d(4, 1, 0), 1.0, mat3));
 
+        //world = new HittableList(new BVHNode(world));
+
         Camera cam = new()
         {
             ImageWidth = 400,

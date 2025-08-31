@@ -6,9 +6,23 @@ namespace RayTrace;
 // * Hittable     - abstract class of hittable objects
 // * HittableList - LinkedList which holds all the Hittables which have interacted with a Ray
 // * Sphere       - implementation of Hittable for a sphere
+// * HitRecord
+
 
 public class HittableList : Hittable
 {
+    private AABB boundingBox = new();
+
+    public override AABB GetBoundingBox()
+    {
+        return boundingBox;
+    }
+
+    public override void SetBoundingBox(AABB value)
+    {
+        boundingBox = value;
+    }
+
     public LinkedList<Hittable> Objects;
 
     public HittableList()
@@ -23,7 +37,12 @@ public class HittableList : Hittable
 
     public void Clear() => Objects.Clear();
 
-    public void Add(Hittable Object) => Objects.AddLast(Object);
+    public void Add(Hittable Object)
+    {
+        Objects.AddLast(Object);
+        // Expand the bounding box to cover the new object
+        SetBoundingBox(new AABB(GetBoundingBox(), Object.GetBoundingBox()));
+    }
 
     public override bool Hit(Ray r, Interval rayT, HitRecord rec)
     {
@@ -92,6 +111,8 @@ public class HitRecord
 public abstract class Hittable
 {
     public abstract bool Hit(Ray r, Interval rayT, HitRecord rec);
+    public abstract AABB GetBoundingBox();
+    public abstract void SetBoundingBox(AABB value);
 }
 
 public class Sphere : Hittable
@@ -99,19 +120,38 @@ public class Sphere : Hittable
     public Ray Center { get; private set; }
     public double Radius { get; private set; }
     public Material Mat { get; private set; }
+    private AABB boundingBox;
+
+    public override AABB GetBoundingBox()
+    {
+        return boundingBox;
+    }
+
+    public override void SetBoundingBox(AABB value)
+    {
+        boundingBox = value;
+    }
 
     public Sphere(Vector3d center, double radius, Material mat)
     {
+        // Stationary sphere
         Center = new(center, new Vector3d(0, 0, 0));
         Radius = Math.Max(0.0, radius);
         Mat = mat;
+        Vector3d rVec = new(radius, radius, radius);
+        SetBoundingBox(new AABB(center - rVec, center + rVec));
     }
 
     public Sphere(Vector3d center1, Vector3d center2, double radius, Material mat)
     {
+        // Moving sphere
         Center = new(center1, center2 - center1);
         Radius = Math.Max(0.0, radius);
         Mat = mat;
+        Vector3d rVec = new(radius, radius, radius);
+        AABB box1 = new(Center.At(0.0) - rVec, Center.At(0.0) + rVec);
+        AABB box2 = new(Center.At(1.0) - rVec, Center.At(1.0) + rVec);
+        SetBoundingBox(new(box1, box2));
     }
 
     public override bool Hit(Ray r, Interval rayT, HitRecord rec)

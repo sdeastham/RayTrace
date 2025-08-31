@@ -2,15 +2,16 @@ namespace RayTrace;
 
 public class Vector3d
 {
-    public double X { get; private set; }
-    public double Y { get; private set; }
-    public double Z { get; private set; }
+    public double[] Data { get; private set; } = new double[3];
+    public double X => Data[0];
+    public double Y => Data[1];
+    public double Z => Data[2];
 
     public Vector3d(double x, double y, double z)
     {
-        X = x;
-        Y = y;
-        Z = z;
+        Data[0] = x;
+        Data[1] = y;
+        Data[2] = z;
     }
 
     public double LengthSquared => X * X + Y * Y + Z * Z;
@@ -18,9 +19,9 @@ public class Vector3d
 
     public void Overwrite(Vector3d v)
     {
-        X = v.X;
-        Y = v.Y;
-        Z = v.Z;
+        Data[0] = v.X;
+        Data[1] = v.Y;
+        Data[2] = v.Z;
     }
 
     public bool NearZero
