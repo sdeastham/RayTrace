@@ -25,10 +25,50 @@ public class Perlin
 
     public double Noise(Vector3d p)
     {
-        int i = (int)(4 * p.X) & 255;
-        int j = (int)(4 * p.Y) & 255;
-        int k = (int)(4 * p.Z) & 255;
-        return RandomValue[PermX[i] ^ PermY[j] ^ PermZ[k]];
+        double u = p.X - Math.Floor(p.X);
+        double v = p.Y - Math.Floor(p.Y);
+        double w = p.Z - Math.Floor(p.Z);
+
+        int i = (int)Math.Floor(p.X);
+        int j = (int)Math.Floor(p.Y);
+        int k = (int)Math.Floor(p.Z);
+
+        double[,,] c = new double[2, 2, 2];
+
+        for (int di = 0; di < 2; di++)
+        {
+            for (int dj = 0; dj < 2; dj++)
+            {
+                for (int dk = 0; dk < 2; dk++)
+                {
+                    c[di, dj, dk] = RandomValue[
+                        PermX[(i + di) & 255] ^
+                        PermY[(j + dj) & 255] ^
+                        PermZ[(k + dk) & 255]];
+                }
+            }
+        }
+        return TrilinearInterp(c, u, v, w);
+    }
+
+    private static double TrilinearInterp(double[,,] c, double u, double v, double w)
+    {
+        // Smoothing with trilinear interpolation
+        double accum = 0.0;
+        for (int i = 0; i < 2; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                for (int k = 0; k < 2; k++)
+                {
+                    accum += (i*u + (1-i)*(1-u))
+                           * (j*v + (1-j)*(1-v))
+                           * (k*w + (1-k)*(1-w))
+                           * c[i, j, k];
+                }
+            }
+        }
+        return accum;
     }
 
     private void PerlinGeneratePerm(int[] perm)
