@@ -17,6 +17,33 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
+        await CheckeredSpheres();
+    }
+
+    private static async Task CheckeredSpheres()
+    {
+        HittableList world = new();
+        var checker = new CheckerTexture(0.32, new Color(0.2, 0.3, 0.1), new Color(0.9, 0.9, 0.9));
+        world.Add(new Sphere(new Vector3d(0, -10, 0), 10, new Lambertian(checker), "Lower"));
+        world.Add(new Sphere(new Vector3d(0, 10, 0), 10, new Lambertian(checker), "Upper"));
+        Camera cam = new()
+        {
+            ImageWidth = 400,
+            AspectRatio = 16.0 / 9.0,
+            SamplesPerPixel = 10,
+            MaxDepth = 50,
+            VerticalFOV = 20.0,
+            LookAt = new Vector3d(0, 0, 0),
+            LookFrom = new Vector3d(13.0, 2.0, 3.0),
+            UpVector = new Vector3d(0.0, 1.0, 0.0),
+            DefocusAngle = 0.0,
+        };
+        cam.Render(world);
+        cam.WriteToPNG("checkered.png");
+    }
+
+    private static async Task BouncingSpheres()
+    {
         // Set up the world
         HittableList world = new();
 
@@ -52,7 +79,7 @@ internal class Program
         Random sphereGen = new();
         string objectName;
 
-        #if !SIMPLETEST
+#if !SIMPLETEST
         for (int a = -11; a < 11; a++)
         {
             for (int b = -11; b < 11; b++)
@@ -94,7 +121,7 @@ internal class Program
                 }
             }
         }
-        #endif
+#endif
 
         Material mat1 = new Dielectric(1.5);
         world.Add(new Sphere(new Vector3d(0, 1, 0), 1.0, mat1, "BigGlassSphere"));
@@ -134,12 +161,8 @@ internal class Program
         }
         else
         {
-            Stopwatch stopwatch = new();
-            stopwatch.Start();
             cam.Render(world);
-            stopwatch.Stop();
-            Console.WriteLine($"Elapsed time: {stopwatch.ElapsedMilliseconds * 0.001} s");
-            cam.WriteToPNG("image.png");
+            cam.WriteToPNG("bouncing.png");
         }
     }
 }

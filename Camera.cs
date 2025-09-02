@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -71,6 +72,8 @@ public class Camera
 
     public void Render(Hittable world)
     {
+        Stopwatch stopwatch = new();
+        stopwatch.Start();
         Initialize();
         if (ImageData is null)
         {
@@ -98,12 +101,14 @@ public class Camera
                 }
                 else
                 {
-                    int progressInt = (int)(10*completedIterations / totalIterations);
+                    int progressInt = (int)(10 * completedIterations / totalIterations);
                     Console.Write(progressInt);
                 }
             }
         });
         Console.Write("\n");
+        stopwatch.Stop();
+        Console.WriteLine($"Elapsed time: {stopwatch.ElapsedMilliseconds * 0.001} s");
     }
 
     public static double LinearToGamma(double linearComponent)
