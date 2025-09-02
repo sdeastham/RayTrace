@@ -37,8 +37,14 @@ public class BVHNode : Hittable
     public BVHNode(HittableList hitList) : this(hitList.Objects, 0, hitList.Objects.Count) { }
     public BVHNode(LinkedList<Hittable> objects, int start, int end, int depth = 0, bool isLeft = true)
     {
+        // Build the bounding box of the span of the source objects
+        boundingBox = AABB.empty;
+        for (int objectIndex = start; objectIndex < end; objectIndex++)
+        {
+            boundingBox = new AABB(boundingBox, objects.ElementAt(objectIndex).GetBoundingBox());
+        }
         // Return 0, 1, or 2
-        int axis = Random.Shared.Next(0, 3);
+        int axis = boundingBox.LongestAxis;
         // Which comparator to use?
         int comparator(Hittable a, Hittable b) => (axis == 0) ? BoxXCompare(a, b)
                                                 : (axis == 1) ? BoxYCompare(a, b)

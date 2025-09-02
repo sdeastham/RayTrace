@@ -72,4 +72,20 @@ public class AABB
         }
         return true;
     }
+
+    public int LongestAxis
+    {
+        get
+        {
+            double xSize = XInterval.Size;
+            double ySize = YInterval.Size;
+            double zSize = ZInterval.Size;
+            if (xSize >= ySize && xSize >= zSize) return 0;
+            if (ySize >= zSize) return 1;
+            return 2;
+        }
+    }
+
+    public static readonly AABB empty = new(Interval.empty, Interval.empty, Interval.empty);
+    public static readonly AABB universe = new(Interval.universe, Interval.universe, Interval.universe);
 }
