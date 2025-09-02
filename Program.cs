@@ -17,7 +17,34 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
-        await CheckeredSpheres();
+        switch (3)
+        {
+            case 1: await BouncingSpheres(); break;
+            case 2: await CheckeredSpheres(); break;
+            case 3: await Earth(); break;
+        }
+    }
+
+    private static async Task Earth()
+    {
+        HittableList world = new();
+        ITexture earthTexture = new ImageTexture("earthmap.jpg");
+        Material earthSurface = new Lambertian(earthTexture);
+        world.Add(new Sphere(new Vector3d(0, 0, 0), 2, earthSurface, "Earth"));
+        Camera cam = new()
+        {
+            ImageWidth = 400,
+            AspectRatio = 16.0 / 9.0,
+            SamplesPerPixel = 10,
+            MaxDepth = 50,
+            VerticalFOV = 20.0,
+            LookAt = new Vector3d(0, 0, 0),
+            LookFrom = new Vector3d(0.0, 0.0, 12.0),
+            UpVector = new Vector3d(0.0, 1.0, 0.0),
+            DefocusAngle = 0.0,
+        };
+        cam.Render(world);
+        cam.WriteToPNG("earth.png");
     }
 
     private static async Task CheckeredSpheres()

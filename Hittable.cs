@@ -110,6 +110,8 @@ public class HitRecord
         Mat = rec.Mat;
         Normal = rec.Normal;
         FrontFace = rec.FrontFace;
+        U = rec.U;
+        V = rec.V;
     }
 }
 
@@ -211,6 +213,17 @@ public class Sphere : Hittable
         Vector3d outwardNormal = (rec.P - currentCenter) / Radius;
         rec.Mat = Mat;
         rec.SetFaceNormal(r, outwardNormal);
+        (rec.U, rec.V) = GetSphereUV(outwardNormal);
         return true;
+    }
+
+    public static (double, double) GetSphereUV(Vector3d p)
+    {
+        double theta = Math.Acos(-p.Y);
+        double phi = Math.Atan2(-p.Z, p.X) + Math.PI;
+
+        double u = phi / (2 * Math.PI);
+        double v = theta / Math.PI;
+        return (u, v);
     }
 }

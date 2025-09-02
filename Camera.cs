@@ -82,7 +82,7 @@ public class Camera
         }
         int totalIterations = ImageHeight * ImageWidth;
         int completedIterations = 0;
-        Console.Clear();
+        //Console.Clear();
         Console.WriteLine($"Beginning render ({totalIterations} pixels).");
         Parallel.For(0, totalIterations, ij =>
         {

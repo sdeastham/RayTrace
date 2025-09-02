@@ -14,11 +14,11 @@ public abstract class Material : IMaterial
     public abstract bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator);
 }
 
-public class Lambertian(Texture tex) : Material
+public class Lambertian(ITexture tex) : Material
 {
     public Lambertian(Color albedo) : this(new SolidColor(albedo)) { }
 
-    private Texture Tex = tex;
+    private ITexture Tex = tex;
 
     public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
     {
