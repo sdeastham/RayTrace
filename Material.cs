@@ -14,9 +14,11 @@ public abstract class Material : IMaterial
     public abstract bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator);
 }
 
-public class Lambertian(Vector3d albedo) : Material
+public class Lambertian(Texture tex) : Material
 {
-    private Vector3d Albedo = albedo;
+    public Lambertian(Color albedo) : this(new SolidColor(albedo)) { }
+
+    private Texture Tex = tex;
 
     public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
     {
@@ -24,7 +26,7 @@ public class Lambertian(Vector3d albedo) : Material
         // Catch degenerate scatter direction
         if (scatterDirection.NearZero) scatterDirection = rec.Normal;
         scattered.Overwrite(new Ray(rec.P, scatterDirection, rIn.Time));
-        attenuation.Overwrite(Albedo);
+        attenuation.Overwrite(Tex.Value(rec.U, rec.V, rec.P));
         return true;
     }
 }

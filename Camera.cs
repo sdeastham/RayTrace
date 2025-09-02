@@ -29,9 +29,9 @@ public class Camera
     private Vector3d? Pixel00Loc; // Location of pixel 0,0
     private Vector3d? PixelDeltaU; // Offset between pixels (horizontal)
     private Vector3d? PixelDeltaV; // Offset between pixels (vertical)
-    private Vector3d UBasis, VBasis, WBasis; // Camera frame basis vectors
-    private Vector3d DefocusDiskU; // Defocus disk horizontal radius
-    private Vector3d DefocusDiskV; // Defocus disk vertical radius
+    private Vector3d? UBasis, VBasis, WBasis; // Camera frame basis vectors
+    private Vector3d? DefocusDiskU; // Defocus disk horizontal radius
+    private Vector3d? DefocusDiskV; // Defocus disk vertical radius
     private Vector3d[,]? ImageData;
     private readonly RTRandom Generator = new();
     private bool PrettyPrint = false; 

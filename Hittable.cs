@@ -78,6 +78,7 @@ public class HitRecord
     public Vector3d P, Normal;
     public double T;
     public Material? Mat;
+    public double U, V; // Coordinates of the hit on the object
 
     public HitRecord(Vector3d p, Vector3d normal, double t)
     {
@@ -85,16 +86,11 @@ public class HitRecord
         Normal = normal;
         T = t;
         Mat = null;
+        U = 0.0;
+        V = 0.0;
     }
 
-    public HitRecord()
-    {
-        // Default constructor - 
-        P = new Vector3d(0.0, 0.0, 0.0);
-        Normal = new Vector3d(1.0, 0.0, 0.0);
-        T = double.PositiveInfinity;
-        Mat = null;
-    }
+    public HitRecord() : this(new Vector3d(0.0,0.0,0.0), new Vector3d(1.0,0.0,0.0), double.PositiveInfinity) { }
 
     public bool FrontFace = false;
 

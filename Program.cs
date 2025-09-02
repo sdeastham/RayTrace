@@ -45,8 +45,8 @@ internal class Program
         world.Add(new Sphere(new Vector3d(-R, 0, -1.0), R, materialLeft));
         world.Add(new Sphere(new Vector3d( R, 0, -1.0), R, materialRight));
         */
-
-        Material groundMaterial = new Lambertian(new Vector3d(0.5, 0.5, 0.5));
+        Texture checker = new CheckerTexture(0.32, new Color(0.2, 0.3, 0.1), new Color(0.9, 0.9, 0.9));
+        Material groundMaterial = new Lambertian(checker);
         world.Add(new Sphere(new Vector3d(0, -1000.0, 0), 1000.0, groundMaterial, "Ground"));
 
         Random sphereGen = new();
@@ -66,9 +66,9 @@ internal class Program
                     if (chooseMat < 0.8)
                     {
                         // Diffuse sphere
-                        var albedo = new Vector3d(sphereGen.NextDouble() * sphereGen.NextDouble(),
-                                                    sphereGen.NextDouble() * sphereGen.NextDouble(),
-                                                    sphereGen.NextDouble() * sphereGen.NextDouble());
+                        var albedo = new Color(sphereGen.NextDouble() * sphereGen.NextDouble(),
+                                               sphereGen.NextDouble() * sphereGen.NextDouble(),
+                                               sphereGen.NextDouble() * sphereGen.NextDouble());
                         sphereMaterial = new Lambertian(albedo);
                         center2 = center + new Vector3d(0, sphereGen.NextDouble() * 0.5, 0);
                         objectName = "SmallDiffuseSphere";
@@ -99,10 +99,10 @@ internal class Program
         Material mat1 = new Dielectric(1.5);
         world.Add(new Sphere(new Vector3d(0, 1, 0), 1.0, mat1, "BigGlassSphere"));
 
-        Material mat2 = new Lambertian(new Vector3d(0.4, 0.2, 0.1));
+        Material mat2 = new Lambertian(new Color(0.4, 0.2, 0.1));
         world.Add(new Sphere(new Vector3d(-4, 1, 0), 1.0, mat2, "BigDiffuseSphere"));
 
-        Material mat3 = new Metal(new Vector3d(0.7, 0.6, 0.5), 0.0);
+        Material mat3 = new Metal(new Color(0.7, 0.6, 0.5), 0.0);
         world.Add(new Sphere(new Vector3d(4, 1, 0), 1.0, mat3, "BigMetalSphere"));
 
         Console.WriteLine($"Total object count: {world.Objects.Count}");
