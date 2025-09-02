@@ -46,21 +46,29 @@ public class AABB
         Vector3d rayDirection = r.Direction;
         for (int axis = 0; axis < 3; axis++)
         {
+            // Bounds of the slab in this dimension
             Interval ax = AxisInterval(axis);
             double adInv = 1.0 / rayDirection.Data[axis];
-            var t0 = (ax.Min - rayOrigin.Data[axis]) * adInv;
-            var t1 = (ax.Max - rayOrigin.Data[axis]) * adInv;
+            // Coordinate of the intersection of the ray with the interval minimum, 
+            // in terms of distance along the ray from the origin in the direction of
+            // travel of the ray. t1 is then the intersection with the maximum.
+            double t0 = (ax.Min - rayOrigin.Data[axis]) * adInv;
+            double t1 = (ax.Max - rayOrigin.Data[axis]) * adInv;
+            double mintersect = rayT.Min;
+            double maxtersect = rayT.Max;
             if (t0 < t1)
             {
-                if (t0 > rayT.Min) rayT.Min = t0;
-                if (t1 < rayT.Max) rayT.Max = t1;
+                // Direction of travel of the ray is positive in this dimension
+                if (t0 > mintersect) mintersect = t0;
+                if (t1 < maxtersect) maxtersect = t1;
             }
             else
             {
-                if (t1 > rayT.Min) rayT.Min = t1;
-                if (t0 < rayT.Max) rayT.Max = t0;
+                // Direction of travel of the ray is negative in this dimension
+                if (t1 > mintersect) mintersect = t1;
+                if (t0 < maxtersect) maxtersect = t0;
             }
-            if (rayT.Max <= rayT.Min) return false;
+            if (maxtersect <= mintersect) return false;
         }
         return true;
     }

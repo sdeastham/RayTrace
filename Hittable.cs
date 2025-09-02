@@ -12,6 +12,15 @@ namespace RayTrace;
 public class HittableList : Hittable
 {
     private AABB boundingBox = new();
+    private string HitName = "HittableList";
+    public override string GetName()
+    {
+        return HitName;
+    }
+    public override void SetName(string name)
+    {
+        HitName = name;
+    }
 
     public override AABB GetBoundingBox()
     {
@@ -108,11 +117,21 @@ public class HitRecord
     }
 }
 
-public abstract class Hittable
+public interface IHittable
+{
+    AABB GetBoundingBox();
+    bool Hit(Ray r, Interval rayT, HitRecord rec);
+    void SetBoundingBox(AABB value);
+    string GetName();
+}
+
+public abstract class Hittable : IHittable
 {
     public abstract bool Hit(Ray r, Interval rayT, HitRecord rec);
     public abstract AABB GetBoundingBox();
     public abstract void SetBoundingBox(AABB value);
+    public abstract string GetName();
+    public abstract void SetName(string name);
 }
 
 public class Sphere : Hittable
@@ -121,10 +140,21 @@ public class Sphere : Hittable
     public double Radius { get; private set; }
     public Material Mat { get; private set; }
     private AABB boundingBox;
+    private string HitName = "Sphere";
 
     public override AABB GetBoundingBox()
     {
         return boundingBox;
+    }
+
+    public override void SetName(string name)
+    {
+        HitName = name;
+    }
+
+    public override string GetName()
+    {
+        return HitName;
     }
 
     public override void SetBoundingBox(AABB value)
@@ -132,22 +162,24 @@ public class Sphere : Hittable
         boundingBox = value;
     }
 
-    public Sphere(Vector3d center, double radius, Material mat)
+    public Sphere(Vector3d center, double radius, Material mat, string name = "Sphere")
     {
         // Stationary sphere
         Center = new(center, new Vector3d(0, 0, 0));
         Radius = Math.Max(0.0, radius);
         Mat = mat;
+        SetName(name);
         Vector3d rVec = new(radius, radius, radius);
         SetBoundingBox(new AABB(center - rVec, center + rVec));
     }
 
-    public Sphere(Vector3d center1, Vector3d center2, double radius, Material mat)
+    public Sphere(Vector3d center1, Vector3d center2, double radius, Material mat, string name = "MovingSphere")
     {
         // Moving sphere
         Center = new(center1, center2 - center1);
         Radius = Math.Max(0.0, radius);
         Mat = mat;
+        SetName(name);
         Vector3d rVec = new(radius, radius, radius);
         AABB box1 = new(Center.At(0.0) - rVec, Center.At(0.0) + rVec);
         AABB box2 = new(Center.At(1.0) - rVec, Center.At(1.0) + rVec);
@@ -156,6 +188,7 @@ public class Sphere : Hittable
 
     public override bool Hit(Ray r, Interval rayT, HitRecord rec)
     {
+        //Console.WriteLine($"Sphere {GetName()}: Testing against interval {rayT}");
         Vector3d currentCenter = Center.At(r.Time);
         Vector3d oc = currentCenter - r.Origin;
         var a = r.Direction.LengthSquared;

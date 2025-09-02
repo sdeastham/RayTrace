@@ -47,10 +47,12 @@ internal class Program
         */
 
         Material groundMaterial = new Lambertian(new Vector3d(0.5, 0.5, 0.5));
-        world.Add(new Sphere(new Vector3d(0, -1000.0, 0), 1000.0, groundMaterial));
+        world.Add(new Sphere(new Vector3d(0, -1000.0, 0), 1000.0, groundMaterial, "Ground"));
 
         Random sphereGen = new();
+        string objectName;
 
+        #if !SIMPLETEST
         for (int a = -11; a < 11; a++)
         {
             for (int b = -11; b < 11; b++)
@@ -69,6 +71,7 @@ internal class Program
                                                     sphereGen.NextDouble() * sphereGen.NextDouble());
                         sphereMaterial = new Lambertian(albedo);
                         center2 = center + new Vector3d(0, sphereGen.NextDouble() * 0.5, 0);
+                        objectName = "SmallDiffuseSphere";
                     }
                     else if (chooseMat < 0.95)
                     {
@@ -79,27 +82,33 @@ internal class Program
                                                     sphereGen.NextDouble() * 0.5 + 0.5);
                         var fuzz = sphereGen.NextDouble() * 0.5;
                         sphereMaterial = new Metal(albedo, fuzz);
+                        objectName = "SmallMetalSphere";
                     }
                     else
                     {
                         // Glass
                         sphereMaterial = new Dielectric(1.5);
+                        objectName = "SmallGlassSphere";
                     }
-                    world.Add(new Sphere(center, center2, 0.2, sphereMaterial));
+                    world.Add(new Sphere(center, center2, 0.2, sphereMaterial, objectName));
                 }
             }
         }
+        #endif
 
         Material mat1 = new Dielectric(1.5);
-        world.Add(new Sphere(new Vector3d(0, 1, 0), 1.0, mat1));
+        world.Add(new Sphere(new Vector3d(0, 1, 0), 1.0, mat1, "BigGlassSphere"));
 
         Material mat2 = new Lambertian(new Vector3d(0.4, 0.2, 0.1));
-        world.Add(new Sphere(new Vector3d(-4, 1, 0), 1.0, mat2));
+        world.Add(new Sphere(new Vector3d(-4, 1, 0), 1.0, mat2, "BigDiffuseSphere"));
 
         Material mat3 = new Metal(new Vector3d(0.7, 0.6, 0.5), 0.0);
-        world.Add(new Sphere(new Vector3d(4, 1, 0), 1.0, mat3));
+        world.Add(new Sphere(new Vector3d(4, 1, 0), 1.0, mat3, "BigMetalSphere"));
 
-        //world = new HittableList(new BVHNode(world));
+        Console.WriteLine($"Total object count: {world.Objects.Count}");
+
+        // Use a bounding volume hierarchy (BVH) rather than testing every object for every ray
+        world = new HittableList(new BVHNode(world));
 
         Camera cam = new()
         {
@@ -114,11 +123,23 @@ internal class Program
             DefocusAngle = 0.6,
             FocusDist = 10.0,
         };
-        Stopwatch stopwatch = new();
-        stopwatch.Start();
-        cam.Render(world);
-        stopwatch.Stop();
-        Console.WriteLine($"Elapsed time: {stopwatch.ElapsedMilliseconds * 0.001} s");
-        cam.WriteToPNG("image.png");
+
+        // Test render
+        bool testRender = false;
+        if (testRender)
+        {
+            // Fire just one ray, into the center of the viewfield
+            cam.SamplesPerPixel = 1;
+            cam.TestRay(world, cam.ImageWidth / 2, (int)((double)cam.ImageWidth / cam.AspectRatio) / 2);
+        }
+        else
+        {
+            Stopwatch stopwatch = new();
+            stopwatch.Start();
+            cam.Render(world);
+            stopwatch.Stop();
+            Console.WriteLine($"Elapsed time: {stopwatch.ElapsedMilliseconds * 0.001} s");
+            cam.WriteToPNG("image.png");
+        }
     }
 }

@@ -24,7 +24,7 @@ public class Camera
 
     // Private
     private double PixelSamplesScale; // Scaling factor for a sum of pixel samples
-    private int ImageHeight; // Rendered image height in pixels
+    public int ImageHeight { get; private set; } // Rendered image height in pixels
     private Vector3d? Center; // Camera center location
     private Vector3d? Pixel00Loc; // Location of pixel 0,0
     private Vector3d? PixelDeltaU; // Offset between pixels (horizontal)
@@ -34,6 +34,7 @@ public class Camera
     private Vector3d DefocusDiskV; // Defocus disk vertical radius
     private Vector3d[,]? ImageData;
     private readonly RTRandom Generator = new();
+    private bool PrettyPrint = false; 
 
     public Camera()
     {
@@ -57,6 +58,17 @@ public class Camera
         return PixelSamplesScale * pixelColor;
     }
 
+    public void TestRay(Hittable world, int i, int j)
+    {
+        Initialize();
+        //Console.Clear();
+        Console.WriteLine($"Testing ray through pixel {i},{j}");
+        // i is in the x direction (width), j in the y direction (height)
+        // This would normally be stored in ImageData[j,i]
+        Vector3d pixelColor = RenderSingle(i, j, world);
+        Console.WriteLine($"Test complete. Pixel color: {pixelColor.X:F6}, {pixelColor.Y:F6}, {pixelColor.Z:F6}");
+    }
+
     public void Render(Hittable world)
     {
         Initialize();
@@ -77,10 +89,17 @@ public class Camera
             Interlocked.Increment(ref completedIterations);
             if (completedIterations % 100 == 0)
             {
-                Console.SetCursorPosition(0, 1);
-                Console.Write(new string(' ', Console.WindowWidth));
-                Console.SetCursorPosition(0, 1);
-                Console.Write($"Progress: {completedIterations:D6}/{totalIterations:D6} ({((double)completedIterations / totalIterations) * 100:F1}%)");
+                if (PrettyPrint)
+                {
+                    Console.SetCursorPosition(0, 1);
+                    Console.Write(new string(' ', Console.WindowWidth));
+                    Console.SetCursorPosition(0, 1);
+                    Console.Write($"Progress: {completedIterations:D6}/{totalIterations:D6} ({((double)completedIterations / totalIterations) * 100:F1}%)");
+                }
+                else
+                {
+                    Console.Write('.');
+                }
             }
         });
         Console.Write("\n");
@@ -208,6 +227,9 @@ public class Camera
     public Vector3d RayColor(Ray r, int depth, Hittable world)
     {
         // If we've exceeded the bounce limit, no light gathered
+        #if SINGLERAY
+        Console.WriteLine($"Ray generated at depth {depth}");
+        #endif
         if (depth <= 0)
         {
             return new Vector3d(0.0, 0.0, 0.0);

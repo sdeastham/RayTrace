@@ -8,6 +8,12 @@ public class Interval
     public double Min { get; set; }
     public double Max { get; set; }
 
+    public override string ToString()
+    {
+        return $"[{Min}, {Max}]";
+    }
+
+    // Constructors
     public Interval()
     {
         // Default to an empty interval
