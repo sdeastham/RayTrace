@@ -98,7 +98,8 @@ public class Camera
                 }
                 else
                 {
-                    Console.Write('.');
+                    int progressInt = (int)(10*completedIterations / totalIterations);
+                    Console.Write(progressInt);
                 }
             }
         });
