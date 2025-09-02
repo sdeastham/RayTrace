@@ -3,15 +3,16 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace RayTrace;
 
-public class Color : Vector3d
+public class Color(double r, double g, double b) : Vector3d(r, g, b)
 {
-    public Color(double r, double g, double b) : base(r, g, b) { }
-
-    public static readonly Color black = new Color(0, 0, 0);
-    public static readonly Color white = new Color(1, 1, 1);
+    public static readonly Color black = new(0, 0, 0);
+    public static readonly Color white = new(1, 1, 1);
     public double R => Data[0];
     public double G => Data[1];
     public double B => Data[2];
+
+    public static Color operator *(Color c, Vector3d v) => new(c.R * v.X, c.G * v.Y, c.B * v.Z);
+    public static Color operator *(Color c, double d) => new(c.R * d, c.G * d, c.B * d);
 }
 
 public interface ITexture
@@ -99,5 +100,14 @@ public class ImageTexture(Image img) : Texture
         double g = pixel.Y;
         double b = pixel.Z;
         return new Color(r, g, b);
+    }
+}
+
+class NoiseTexture() : Texture
+{
+    private readonly Perlin Noise = new();
+    public override Color Value(double u, double v, Vector3d p)
+    {
+        return new Color(1.0, 1.0, 1.0) * Noise.Noise(p);
     }
 }

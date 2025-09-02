@@ -17,12 +17,35 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
-        switch (3)
+        switch (4)
         {
             case 1: await BouncingSpheres(); break;
             case 2: await CheckeredSpheres(); break;
             case 3: await Earth(); break;
+            case 4: await PerlinSpheres(); break;
         }
+    }
+
+    private static async Task PerlinSpheres()
+    {
+        HittableList world = new();
+        ITexture perlinTexture = new NoiseTexture();
+        world.Add(new Sphere(new Vector3d(0, -1000, 0), 1000, new Lambertian(perlinTexture), "Ground"));
+        world.Add(new Sphere(new Vector3d(0, 2, 0), 2, new Lambertian(perlinTexture), "Sphere"));
+        Camera cam = new()
+        {
+            ImageWidth = 400,
+            AspectRatio = 16.0 / 9.0,
+            SamplesPerPixel = 10,
+            MaxDepth = 50,
+            VerticalFOV = 20.0,
+            LookAt = new Vector3d(0, 0, 0),
+            LookFrom = new Vector3d(13.0, 2.0, 3.0),
+            UpVector = new Vector3d(0.0, 1.0, 0.0),
+            DefocusAngle = 0.0,
+        };
+        cam.Render(world);
+        cam.WriteToPNG("perlin.png");
     }
 
     private static async Task Earth()

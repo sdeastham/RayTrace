@@ -9,6 +9,11 @@ public class RTRandom
         Generator = new();
     }
 
+    public int RandomInt(int min, int max)
+    {
+        return Generator.Next(min, max + 1);
+    }
+
     public double RandomDouble()
     {
         return Generator.NextDouble();
