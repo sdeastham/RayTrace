@@ -29,7 +29,7 @@ internal class Program
     private static async Task PerlinSpheres()
     {
         HittableList world = new();
-        ITexture perlinTexture = new NoiseTexture();
+        ITexture perlinTexture = new NoiseTexture(4.0);
         world.Add(new Sphere(new Vector3d(0, -1000, 0), 1000, new Lambertian(perlinTexture), "Ground"));
         world.Add(new Sphere(new Vector3d(0, 2, 0), 2, new Lambertian(perlinTexture), "Sphere"));
         Camera cam = new()

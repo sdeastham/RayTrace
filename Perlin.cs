@@ -10,13 +10,15 @@ public class Perlin
     private readonly int[] PermX = new int[PointCount];
     private readonly int[] PermY = new int[PointCount];
     private readonly int[] PermZ = new int[PointCount];
+    private Vector3d[] RandomVec = new Vector3d[PointCount];
 
     public Perlin()
     {
         Generator = new RTRandom();
         for (int i = 0; i < PointCount; i++)
         {
-            RandomValue[i] = Generator.RandomDouble();
+            //RandomValue[i] = Generator.RandomDouble();
+            RandomVec[i] = Generator.RandomVector(-1,1);
         }
         PerlinGeneratePerm(PermX);
         PerlinGeneratePerm(PermY);
@@ -32,8 +34,7 @@ public class Perlin
         int i = (int)Math.Floor(p.X);
         int j = (int)Math.Floor(p.Y);
         int k = (int)Math.Floor(p.Z);
-
-        double[,,] c = new double[2, 2, 2];
+        Vector3d[,,] c = new Vector3d[2, 2, 2];
 
         for (int di = 0; di < 2; di++)
         {
@@ -41,19 +42,22 @@ public class Perlin
             {
                 for (int dk = 0; dk < 2; dk++)
                 {
-                    c[di, dj, dk] = RandomValue[
+                    c[di, dj, dk] = RandomVec[
                         PermX[(i + di) & 255] ^
                         PermY[(j + dj) & 255] ^
                         PermZ[(k + dk) & 255]];
                 }
             }
         }
-        return TrilinearInterp(c, u, v, w);
+        return PerlinInterp(c, u, v, w);
     }
 
-    private static double TrilinearInterp(double[,,] c, double u, double v, double w)
+    private static double PerlinInterp(Vector3d[,,] c, double u, double v, double w)
     {
         // Smoothing with trilinear interpolation
+        double uu = u*u*(3 - 2*u);
+        double vv = v*v*(3 - 2*v);
+        double ww = w*w*(3 - 2*w);
         double accum = 0.0;
         for (int i = 0; i < 2; i++)
         {
@@ -61,10 +65,11 @@ public class Perlin
             {
                 for (int k = 0; k < 2; k++)
                 {
-                    accum += (i*u + (1-i)*(1-u))
-                           * (j*v + (1-j)*(1-v))
-                           * (k*w + (1-k)*(1-w))
-                           * c[i, j, k];
+                    Vector3d weightV = new(u - i, v - j, w - k);
+                    accum += (i*uu + (1-i)*(1-uu))
+                           * (j*vv + (1-j)*(1-vv))
+                           * (k*ww + (1-k)*(1-ww))
+                           * Vector3d.Dot(c[i, j, k], weightV);
                 }
             }
         }

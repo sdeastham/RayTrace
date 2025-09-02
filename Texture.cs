@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -103,11 +104,14 @@ public class ImageTexture(Image img) : Texture
     }
 }
 
-class NoiseTexture() : Texture
+class NoiseTexture(double scale) : Texture
 {
+    // Texture with Perlin noise. The larger the value of scale,
+    // the higher-frequency the noise.
     private readonly Perlin Noise = new();
+    private readonly double Scale = scale;
     public override Color Value(double u, double v, Vector3d p)
     {
-        return new Color(1.0, 1.0, 1.0) * Noise.Noise(p);
+        return new Color(1.0, 1.0, 1.0) * 0.5 * (1.0 + Noise.Noise(Scale * p));
     }
 }
