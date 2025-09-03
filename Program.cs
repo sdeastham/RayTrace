@@ -17,14 +17,78 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
-        switch (5)
+        switch (7)
         {
             case 1: await BouncingSpheres(); break;
             case 2: await CheckeredSpheres(); break;
             case 3: await Earth(); break;
             case 4: await PerlinSpheres(); break;
             case 5: await Quads(); break;
+            case 6: await SimpleLight(); break;
+            case 7: await CornellBox(); break;
         }
+    }
+
+    private static async Task CornellBox()
+    {
+        HittableList world = new();
+
+        Material red = new Lambertian(new Color(0.65, 0.05, 0.05));
+        Material white = new Lambertian(new Color(0.73, 0.73, 0.73));
+        Material green = new Lambertian(new Color(0.12, 0.45, 0.15));
+        Material light = new DiffuseLight(new Color(15, 15, 15));
+
+        world.Add(new Quad(new Vector3d(555, 0, 0), new Vector3d(0, 0, 555), new Vector3d(0, 555, 0), green, "Left"));
+        world.Add(new Quad(new Vector3d(0, 0, 0), new Vector3d(0, 555, 0), new Vector3d(0, 0, 555), red, "Right"));
+        world.Add(new Quad(new Vector3d(343, 554, 332), new Vector3d(-130, 0, 0), new Vector3d(0, 0, -105), light, "Light"));
+        world.Add(new Quad(new Vector3d(0, 0, 0), new Vector3d(555, 0, 0), new Vector3d(0, 0, 555), white, "Lower"));
+        world.Add(new Quad(new Vector3d(555, 555, 555), new Vector3d(-555, 0, 0), new Vector3d(0, 0, -555), white, "Upper"));
+        world.Add(new Quad(new Vector3d(0, 0, 555), new Vector3d(555, 0, 0), new Vector3d(0, 555, 0), white, "Back"));
+
+        Camera cam = new()
+        {
+            ImageWidth = 600,
+            AspectRatio = 1.0,
+            SamplesPerPixel = 100,
+            MaxDepth = 50,
+            VerticalFOV = 40.0,
+            LookAt = new Vector3d(278, 278, 0),
+            LookFrom = new Vector3d(278, 278, -800),
+            UpVector = new Vector3d(0.0, 1.0, 0.0),
+            DefocusAngle = 0.0,
+            Background = new Color(0, 0, 0),
+        };
+        cam.Render(world);
+        cam.WriteToPNG("cornellbox.png");
+    }
+
+    private static async Task SimpleLight()
+    {
+        HittableList world = new();
+        Texture perlinTexture = new NoiseTexture(4.0);
+        world.Add(new Sphere(new Vector3d(0, -1000, 0), 1000, new Lambertian(perlinTexture), "Ground"));
+        world.Add(new Sphere(new Vector3d(0, 2, 0), 2, new Lambertian(perlinTexture), "Sphere"));
+
+        Material diffLight = new DiffuseLight(new Color(4, 4, 4));
+        world.Add(new Quad(new Vector3d(3, 1, -2), new Vector3d(2, 0, 0), new Vector3d(0, 2, 0), diffLight, "LightQuad"));
+        world.Add(new Sphere(new Vector3d(0, 7, 0), 2, diffLight, "LightSphere"));
+
+        Camera cam = new()
+        {
+            ImageWidth = 400,
+            AspectRatio = 16.0 / 9.0,
+            SamplesPerPixel = 50,
+            MaxDepth = 50,
+            Background = new Color(0, 0, 0),
+
+            VerticalFOV = 20.0,
+            LookAt = new Vector3d(0, 2, 0),
+            LookFrom = new Vector3d(26, 3, 6),
+            UpVector = new Vector3d(0.0, 1.0, 0.0),
+            DefocusAngle = 0.0,
+        };
+        cam.Render(world);
+        cam.WriteToPNG("light.png");
     }
 
     private static async Task Quads()
@@ -56,6 +120,7 @@ internal class Program
             LookFrom = new Vector3d(0.0, 0.0, 9.0),
             UpVector = new Vector3d(0.0, 1.0, 0.0),
             DefocusAngle = 0.0,
+            Background = new Color(0.7, 0.8, 1.0),
         };
         cam.Render(world);
         cam.WriteToPNG("quads.png");
@@ -78,6 +143,7 @@ internal class Program
             LookFrom = new Vector3d(13.0, 2.0, 3.0),
             UpVector = new Vector3d(0.0, 1.0, 0.0),
             DefocusAngle = 0.0,
+            Background = new Color(0.7, 0.8, 1.0),
         };
         cam.Render(world);
         cam.WriteToPNG("perlin.png");
@@ -100,6 +166,7 @@ internal class Program
             LookFrom = new Vector3d(0.0, 0.0, 12.0),
             UpVector = new Vector3d(0.0, 1.0, 0.0),
             DefocusAngle = 0.0,
+            Background = new Color(0.7, 0.8, 1.0),
         };
         cam.Render(world);
         cam.WriteToPNG("earth.png");
@@ -122,6 +189,7 @@ internal class Program
             LookFrom = new Vector3d(13.0, 2.0, 3.0),
             UpVector = new Vector3d(0.0, 1.0, 0.0),
             DefocusAngle = 0.0,
+            Background = new Color(0.7, 0.8, 1.0),
         };
         cam.Render(world);
         cam.WriteToPNG("checkered.png");
@@ -234,6 +302,7 @@ internal class Program
             UpVector = new Vector3d(0.0, 1.0, 0.0),
             DefocusAngle = 0.6,
             FocusDist = 10.0,
+            Background = new Color(0.7, 0.8, 1.0),
         };
 
         // Test render

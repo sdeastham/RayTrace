@@ -21,7 +21,7 @@ public class Camera
     public Vector3d UpVector = new(0.0, 1.0, 0.0); // Camera-relative "up" direction
     public double DefocusAngle = 0.0; // Variation angle of rays through each pixel
     public double FocusDist = 10.0; // Distance from camera LookFrom point to the plane of perfect focus
-
+    public Color Background = new(0.0, 0.0, 0.0); // Scene background color
 
     // Private
     private double PixelSamplesScale; // Scaling factor for a sum of pixel samples
@@ -244,29 +244,13 @@ public class Camera
         // Lower limit of 0.001 prevents floating-point nonsense where an intersection can be
         // found immediately after a bounce
         HitRecord rec = new();
-        if (world.Hit(r, new Interval(0.001, double.PositiveInfinity), rec))
-        {
-            // Show the Normal
-            //return 0.5 * (rec.Normal + new Vector3d(1.0, 1.0, 1.0));
-            // Random reflection
-            //Vector3d direction = Generator.RandomVectorOnHemisphere(rec.Normal);
-            // Lambertian reflection
-            //Vector3d direction = rec.Normal + Generator.RandomUnitVector();
-            //return 0.5 * RayColor(new Ray(rec.P, direction), depth - 1, world);
-            // Scattering from different materials
-            Ray scattered = new(new Vector3d(0.0, 0.0, 0.0), new Vector3d(1.0, 0.0, 0.0));
-            Vector3d attenuation = new(0.0, 0.0, 0.0);
-            if (rec.Mat.Scatter(r, rec, attenuation, scattered, Generator))
-            {
-                return attenuation * RayColor(scattered, depth - 1, world);
-            }
-            // No light returned
-            return new(0.0, 0.0, 0.0);
-        }
-        // Didn't hit anything - return the "sky"
-        Vector3d unitDirection = r.Direction.UnitVector;
-        double a = 0.5 * (unitDirection.Y + 1.0);
-        return (1.0 - a) * new Vector3d(1.0, 1.0, 1.0) + a * new Vector3d(0.5, 0.7, 1.0);
+        if (!world.Hit(r, new Interval(0.001, double.PositiveInfinity), rec)) return Background;
+        Ray scattered = new(new Vector3d(0.0, 0.0, 0.0), new Vector3d(1.0, 0.0, 0.0));
+        Color attenuation = new(0.0, 0.0, 0.0);
+        Color colorFromEmission = rec.Mat.Emitted(rec.U, rec.V, rec.P);
+        if (!rec.Mat.Scatter(r, rec, attenuation, scattered, Generator)) return colorFromEmission;
+        Color colorFromScatter = attenuation * RayColor(scattered, depth - 1, world);
+        return colorFromEmission + colorFromScatter;
     }
 
     private Ray GetRay(int i, int j)

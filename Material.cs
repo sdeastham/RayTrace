@@ -11,14 +11,21 @@ public interface IMaterial
 
 public abstract class Material : IMaterial
 {
-    public abstract bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator);
+    public virtual bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
+    {
+        return false;
+    }
+    public virtual Color Emitted(double u, double v, Vector3d p)
+    {
+        return new Color(0.0, 0.0, 0.0);
+    }
 }
 
 public class Lambertian(ITexture tex) : Material
 {
     public Lambertian(Color albedo) : this(new SolidColor(albedo)) { }
 
-    private ITexture Tex = tex;
+    protected ITexture Tex = tex;
 
     public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
     {
@@ -80,4 +87,14 @@ public class Dielectric(double refractiveIndex) : Material
         r0 *= r0;
         return r0 + (1.0 - r0) * Math.Pow(1.0 - cosine, 5.0);
     }
+}
+
+public class DiffuseLight(ITexture tex) : Material
+{
+    public DiffuseLight(Color emit) : this(new SolidColor(emit)) { }
+    public override Color Emitted(double u, double v, Vector3d p)
+    {
+        return Tex.Value(u, v, p);
+    }
+    protected ITexture Tex = tex;
 }
