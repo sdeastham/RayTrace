@@ -45,11 +45,14 @@ internal class Program
         world.Add(new Quad(new Vector3d(555, 555, 555), new Vector3d(-555, 0, 0), new Vector3d(0, 0, -555), white, "Upper"));
         world.Add(new Quad(new Vector3d(0, 0, 555), new Vector3d(555, 0, 0), new Vector3d(0, 555, 0), white, "Back"));
 
+        world.Add(Quad.Box(new Vector3d(130, 0, 65), new Vector3d(295, 165, 230), white));
+        world.Add(Quad.Box(new Vector3d(265, 0, 295), new Vector3d(430, 330, 460), white));
+
         Camera cam = new()
         {
             ImageWidth = 600,
             AspectRatio = 1.0,
-            SamplesPerPixel = 100,
+            SamplesPerPixel = 10,
             MaxDepth = 50,
             VerticalFOV = 40.0,
             LookAt = new Vector3d(278, 278, 0),

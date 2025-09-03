@@ -4,7 +4,7 @@ namespace RayTrace;
 
 public class Quad : Hittable
 {
-    public Quad(Vector3d q, Vector3d u, Vector3d v, Material m, string name="Quad")
+    public Quad(Vector3d q, Vector3d u, Vector3d v, Material m, string name = "Quad")
     {
         Q = q;
         U = u;
@@ -16,17 +16,6 @@ public class Quad : Hittable
         W = n / Vector3d.Dot(n, n);
         SetBoundingBox(new AABB(new AABB(q, q + u + v), new AABB(q + u, q + v)));
         SetName(name);
-    }
-    public override void SetName(string name) => Name = name;
-    public override string GetName() => Name;
-    public override void SetBoundingBox(AABB bbox)
-    {
-        BoundingBox = bbox;
-    }
-
-    public override AABB GetBoundingBox()
-    {
-        return BoundingBox;
     }
 
     public override bool Hit(Ray r, Interval rayT, HitRecord rec)
@@ -64,11 +53,30 @@ public class Quad : Hittable
         rec.V = beta;
         return true;
     }
-
-    private AABB BoundingBox;
     private Material Mat;
     private Vector3d U, V, Q, W;
     private Vector3d Normal;
     private double D; // Locates the plane
-    private string Name;
+
+    public static HittableList Box(Vector3d a, Vector3d b, Material mat)
+    {
+        // Returns a 3D box of six sides defined by two opposite corners, a and b
+        HittableList sides = new();
+
+        Vector3d min = new(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y), Math.Min(a.Z, b.Z));
+        Vector3d max = new(Math.Max(a.X, b.X), Math.Max(a.Y, b.Y), Math.Max(a.Z, b.Z));
+
+        Vector3d dx = new(max.X - min.X, 0, 0);
+        Vector3d dy = new(0, max.Y - min.Y, 0);
+        Vector3d dz = new(0, 0, max.Z - min.Z);
+
+        sides.Add(new Quad(new Vector3d(min.X, min.Y, max.Z), dx, dy, mat, "Front"));
+        sides.Add(new Quad(new Vector3d(max.X, min.Y, max.Z), -dz, dy, mat, "Right"));
+        sides.Add(new Quad(new Vector3d(max.X, min.Y, min.Z), -dx, dy, mat, "Back"));
+        sides.Add(new Quad(new Vector3d(min.X, min.Y, min.Z), dz,  dy, mat, "Left"));
+        sides.Add(new Quad(new Vector3d(min.X, max.Y, max.Z), dx, -dz, mat, "Top"));
+        sides.Add(new Quad(new Vector3d(min.X, min.Y, min.Z), dx,  dz, mat, "Bottom"));
+
+        return sides;
+    }
 }
