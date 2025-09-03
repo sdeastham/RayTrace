@@ -113,6 +113,7 @@ class NoiseTexture(double scale) : Texture
     public override Color Value(double u, double v, Vector3d p)
     {
         //return new Color(1.0, 1.0, 1.0) * 0.5 * (1.0 + Noise.Noise(Scale * p));
-        return new Color(1.0, 1.0, 1.0) * Noise.Turbulence(p, 7);
+        //return new Color(1.0, 1.0, 1.0) * Noise.Turbulence(p, 7);
+        return new Color(0.5, 0.5, 0.5) * (1.0 + Math.Sin(Scale * p.Z + 10 * Noise.Turbulence(p, 7)));
     }
 }
