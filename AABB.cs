@@ -101,4 +101,7 @@ public class AABB
 
     public static readonly AABB empty = new(Interval.empty, Interval.empty, Interval.empty);
     public static readonly AABB universe = new(Interval.universe, Interval.universe, Interval.universe);
+
+    public static AABB operator +(AABB bbox, Vector3d offset) => new(bbox.XInterval + offset.X, bbox.YInterval + offset.Y, bbox.ZInterval + offset.Z);
+    public static AABB operator +(Vector3d offset, AABB bbox) => bbox + offset;
 }

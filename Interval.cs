@@ -44,7 +44,7 @@ public class Interval
     public Interval Expand(double delta)
     {
         double padding = delta / 2.0;
-        return new Interval(Min-padding,Max+padding);
+        return new Interval(Min - padding, Max + padding);
     }
 
     public double Size => Max - Min;
@@ -55,5 +55,7 @@ public class Interval
 
     public static readonly Interval empty = new();
     public static readonly Interval universe = new(double.NegativeInfinity, double.PositiveInfinity);
-
+    
+    public static Interval operator +(Interval interval, double offset) => new(interval.Min + offset, interval.Max + offset);
+    public static Interval operator +(double offset, Interval interval) => interval + offset;
 }
