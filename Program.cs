@@ -17,13 +17,48 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
-        switch (4)
+        switch (5)
         {
             case 1: await BouncingSpheres(); break;
             case 2: await CheckeredSpheres(); break;
             case 3: await Earth(); break;
             case 4: await PerlinSpheres(); break;
+            case 5: await Quads(); break;
         }
+    }
+
+    private static async Task Quads()
+    {
+        HittableList world = new();
+        // Materials
+        Material leftRed = new Lambertian(new Color(1.0, 0.2, 0.2));
+        Material backGreen = new Lambertian(new Color(0.2, 1.0, 0.2));
+        Material rightBlue = new Lambertian(new Color(0.2, 0.2, 1.0));
+        Material upperOrange = new Lambertian(new Color(1.0, 0.5, 0.0));
+        Material lowerTeal = new Lambertian(new Color(0.2, 0.8, 0.8));
+
+        // Quads
+        world.Add(new Quad(new Vector3d(-3, -2, 5), new Vector3d(0, 0, -4), new Vector3d(0, 4, 0), leftRed, "Left"));
+        world.Add(new Quad(new Vector3d(-2, -2, 0), new Vector3d(4, 0, 0), new Vector3d(0, 4, 0), backGreen, "Back"));
+        world.Add(new Quad(new Vector3d(3, -2, 1), new Vector3d(0, 0, 4), new Vector3d(0, 4, 0), rightBlue, "Right"));
+        world.Add(new Quad(new Vector3d(-2, 3, 1), new Vector3d(4, 0, 0), new Vector3d(0, 0, 4), upperOrange, "Upper"));
+        world.Add(new Quad(new Vector3d(-2, -3, 5), new Vector3d(4, 0, 0), new Vector3d(0, 0, -4), lowerTeal, "Lower"));
+
+        // Camera
+        Camera cam = new()
+        {
+            ImageWidth = 400,
+            AspectRatio = 1.0,
+            SamplesPerPixel = 10,
+            MaxDepth = 50,
+            VerticalFOV = 80.0,
+            LookAt = new Vector3d(0, 0, 0),
+            LookFrom = new Vector3d(0.0, 0.0, 9.0),
+            UpVector = new Vector3d(0.0, 1.0, 0.0),
+            DefocusAngle = 0.0,
+        };
+        cam.Render(world);
+        cam.WriteToPNG("quads.png");
     }
 
     private static async Task PerlinSpheres()

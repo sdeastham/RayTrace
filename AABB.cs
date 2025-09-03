@@ -1,5 +1,6 @@
 namespace RayTrace;
 
+// Implementation of an axis-aligned bounding box
 public class AABB
 {
     public Interval XInterval, YInterval, ZInterval;
@@ -9,6 +10,7 @@ public class AABB
         XInterval = xInterval;
         YInterval = yInterval;
         ZInterval = zInterval;
+        PadToMinimums();
     }
 
     public AABB(Vector3d a, Vector3d b)
@@ -16,6 +18,7 @@ public class AABB
         XInterval = (a.X <= b.X) ? new Interval(a.X, b.X) : new Interval(b.X, a.X);
         YInterval = (a.Y <= b.Y) ? new Interval(a.Y, b.Y) : new Interval(b.Y, a.Y);
         ZInterval = (a.Z <= b.Z) ? new Interval(a.Z, b.Z) : new Interval(b.Z, a.Z);
+        PadToMinimums();
     }
 
     public AABB(AABB box0, AABB box1)
@@ -84,6 +87,16 @@ public class AABB
             if (ySize >= zSize) return 1;
             return 2;
         }
+    }
+
+    private void PadToMinimums()
+    {
+        // Adjust the AABB so that no side is narrower than some delta,
+        // padding if necessary. This is to prevent issues with ray intersection tests.
+        const double delta = 0.0001;
+        if (XInterval.Size < delta) XInterval = XInterval.Expand(delta);
+        if (YInterval.Size < delta) YInterval = YInterval.Expand(delta);
+        if (ZInterval.Size < delta) ZInterval = ZInterval.Expand(delta);
     }
 
     public static readonly AABB empty = new(Interval.empty, Interval.empty, Interval.empty);
