@@ -18,7 +18,7 @@ public class Perlin
         for (int i = 0; i < PointCount; i++)
         {
             //RandomValue[i] = Generator.RandomDouble();
-            RandomVec[i] = Generator.RandomVector(-1,1);
+            RandomVec[i] = Generator.RandomVector(-1, 1);
         }
         PerlinGeneratePerm(PermX);
         PerlinGeneratePerm(PermY);
@@ -55,9 +55,9 @@ public class Perlin
     private static double PerlinInterp(Vector3d[,,] c, double u, double v, double w)
     {
         // Smoothing with trilinear interpolation
-        double uu = u*u*(3 - 2*u);
-        double vv = v*v*(3 - 2*v);
-        double ww = w*w*(3 - 2*w);
+        double uu = u * u * (3 - 2 * u);
+        double vv = v * v * (3 - 2 * v);
+        double ww = w * w * (3 - 2 * w);
         double accum = 0.0;
         for (int i = 0; i < 2; i++)
         {
@@ -66,9 +66,9 @@ public class Perlin
                 for (int k = 0; k < 2; k++)
                 {
                     Vector3d weightV = new(u - i, v - j, w - k);
-                    accum += (i*uu + (1-i)*(1-uu))
-                           * (j*vv + (1-j)*(1-vv))
-                           * (k*ww + (1-k)*(1-ww))
+                    accum += (i * uu + (1 - i) * (1 - uu))
+                           * (j * vv + (1 - j) * (1 - vv))
+                           * (k * ww + (1 - k) * (1 - ww))
                            * Vector3d.Dot(c[i, j, k], weightV);
                 }
             }
@@ -90,5 +90,21 @@ public class Perlin
             // Swap!
             (p[i], p[j]) = (p[j], p[i]);
         }
+    }
+
+    public double Turbulence(Vector3d p, int depth)
+    {
+        double accum = 0.0;
+        Vector3d tempP = p;
+        double weight = 1.0;
+
+        for (int i = 0; i < depth; i++)
+        {
+            accum += weight * Noise(tempP);
+            weight *= 0.5;
+            tempP *= 2;
+        }
+
+        return Math.Abs(accum);
     }
 }
