@@ -17,7 +17,7 @@ public abstract class Material : IMaterial
         pdf = 0.0;
         return false;
     }
-    public virtual Color Emitted(double u, double v, Vector3d p)
+    public virtual Color Emitted(Ray rIn, HitRecord rec, double u, double v, Vector3d p)
     {
         return new Color(0.0, 0.0, 0.0);
     }
@@ -107,8 +107,10 @@ public class Dielectric(double refractiveIndex) : Material
 public class DiffuseLight(ITexture tex) : Material
 {
     public DiffuseLight(Color emit) : this(new SolidColor(emit)) { }
-    public override Color Emitted(double u, double v, Vector3d p)
+    public override Color Emitted(Ray rIn, HitRecord rec, double u, double v, Vector3d p)
     {
+        // Light is only emitted on the front face
+        if (!rec.FrontFace) return Color.black;
         return Tex.Value(u, v, p);
     }
     protected ITexture Tex = tex;

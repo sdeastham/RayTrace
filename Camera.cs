@@ -265,7 +265,7 @@ public class Camera
         if (!world.Hit(r, new Interval(0.001, double.PositiveInfinity), rec)) return Background;
         Ray scattered = new(new Vector3d(0.0, 0.0, 0.0), new Vector3d(1.0, 0.0, 0.0));
         Color attenuation = new(0.0, 0.0, 0.0);
-        Color colorFromEmission = rec.Mat.Emitted(rec.U, rec.V, rec.P);
+        Color colorFromEmission = rec.Mat.Emitted(r, rec, rec.U, rec.V, rec.P);
         double pdfValue;
         if (!rec.Mat.Scatter(r, rec, attenuation, scattered, out pdfValue, Generator)) return colorFromEmission;
 
