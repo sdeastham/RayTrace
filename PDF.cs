@@ -63,3 +63,26 @@ public class HittablePDF(IHittable objects, Vector3d origin) : PDF
         return Objects.Random(Origin, generator);
     }
 }
+
+public class MixturePDF : PDF
+{
+    private PDF[] PDFs = new PDF[2];
+    public MixturePDF(PDF p0, PDF p1)
+    {
+        PDFs[0] = p0;
+        PDFs[1] = p1;
+    }
+
+    public override double Value(Vector3d direction)
+    {
+        return 0.5 * PDFs[0].Value(direction) + 0.5 * PDFs[1].Value(direction);
+    }
+
+    public override Vector3d Generate(RTRandom generator)
+    {
+        if (generator.RandomDouble() < 0.5)
+            return PDFs[0].Generate(generator);
+        else
+            return PDFs[1].Generate(generator);
+    }
+}

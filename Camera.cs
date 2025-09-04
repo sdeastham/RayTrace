@@ -277,8 +277,11 @@ public class Camera
         // This is a simple implementation that assumes all lights are in a single Hittable
         // object, such as a HittableList
         HittablePDF lightPDF = new(lights, rec.P);
-        scattered = new Ray(rec.P, lightPDF.Generate(Generator), r.Time);
-        pdfValue = lightPDF.Value(scattered.Direction);
+        CosinePDF cosinePDF = new(rec.Normal);
+        // Create a mixture PDF that uses both the light and cosine PDFs
+        MixturePDF mixturePDF = new(cosinePDF, lightPDF);
+        scattered = new Ray(rec.P, mixturePDF.Generate(Generator), r.Time);
+        pdfValue = mixturePDF.Value(scattered.Direction);
         double scatteringPDF = rec.Mat.ScatteringPDF(r, rec, scattered);
         Color sampleColor = RayColor(scattered, depth - 1, world, lights);
         Color colorFromScatter = attenuation * scatteringPDF * sampleColor / pdfValue;
