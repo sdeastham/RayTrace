@@ -165,17 +165,21 @@ internal class Program
         world.Add(new Quad(new Vector3d(0, 0, 0), new Vector3d(555, 0, 0), new Vector3d(0, 0, 555), white, "Lower"));
         world.Add(new Quad(new Vector3d(555, 555, 555), new Vector3d(-555, 0, 0), new Vector3d(0, 0, -555), white, "Upper"));
         world.Add(new Quad(new Vector3d(0, 0, 555), new Vector3d(555, 0, 0), new Vector3d(0, 555, 0), white, "Back"));
+
+        // Light
         world.Add(new Quad(new Vector3d(343, 554, 332), new Vector3d(-130, 0, 0), new Vector3d(0, 0, -105), light, "Light"));
 
-        Hittable box1 = Quad.Box(new Vector3d(0, 0, 0), new Vector3d(165, 330, 165), aluminium);
+        Hittable box1 = Quad.Box(new Vector3d(0, 0, 0), new Vector3d(165, 330, 165), white);
         box1 = new RotateY(box1, 15);
         box1 = new Translate(box1, new Vector3d(265, 0, 295));
         world.Add(box1);
 
-        Hittable box2 = Quad.Box(new Vector3d(0, 0, 0), new Vector3d(165, 165, 165), white);
-        box2 = new RotateY(box2, -18);
-        box2 = new Translate(box2, new Vector3d(130, 0, 65));
-        world.Add(box2);
+        //Hittable box2 = Quad.Box(new Vector3d(0, 0, 0), new Vector3d(165, 165, 165), white);
+        //box2 = new RotateY(box2, -18);
+        //box2 = new Translate(box2, new Vector3d(130, 0, 65));
+        //world.Add(box2);
+        Material glass = new Dielectric(1.5);
+        world.Add(new Sphere(new Vector3d(190, 90, 190), 90, glass, "GlassSphere"));
 
         // Indicate the location of the light source(s)
         Material emptyMaterial = new();
