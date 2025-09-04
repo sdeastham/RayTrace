@@ -98,3 +98,15 @@ public class DiffuseLight(ITexture tex) : Material
     }
     protected ITexture Tex = tex;
 }
+
+public class Isotropic(ITexture tex) : Material
+{
+    public Isotropic(Color albedo) : this(new SolidColor(albedo)) { }
+    protected ITexture Tex = tex;
+    public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
+    {
+        scattered.Overwrite(new Ray(rec.P, generator.RandomUnitVector(), rIn.Time));
+        attenuation.Overwrite(Tex.Value(rec.U, rec.V, rec.P));
+        return true;
+    }
+}

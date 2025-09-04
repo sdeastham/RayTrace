@@ -177,7 +177,7 @@ public class Translate : Hittable
         SetBoundingBox(obj.GetBoundingBox() + Offset);
         SetName("Translate(" + obj.GetName() + ")");
     }
-
+    public override AABB GetBoundingBox() => Object.GetBoundingBox();
     private Hittable Object;
     private Vector3d Offset;
 }
@@ -236,6 +236,8 @@ public class RotateY : Hittable
                          -SinTheta * rec.Normal.X + CosTheta * rec.Normal.Z);
         return true;
     }
+
+    public override AABB GetBoundingBox() => Object.GetBoundingBox();
     private double CosTheta, SinTheta;
     private Hittable Object;
 }
