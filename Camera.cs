@@ -267,7 +267,10 @@ public class Camera
         Color attenuation = new(0.0, 0.0, 0.0);
         Color colorFromEmission = rec.Mat.Emitted(rec.U, rec.V, rec.P);
         if (!rec.Mat.Scatter(r, rec, attenuation, scattered, Generator)) return colorFromEmission;
-        Color colorFromScatter = attenuation * RayColor(scattered, depth - 1, world);
+
+        double scatteringPDF = rec.Mat.ScatteringPDF(r, rec, scattered);
+        double valuePDF = scatteringPDF;
+        Color colorFromScatter = attenuation * scatteringPDF * RayColor(scattered, depth - 1, world) / valuePDF;
         return colorFromEmission + colorFromScatter;
     }
 

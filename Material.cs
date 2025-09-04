@@ -7,6 +7,7 @@ namespace RayTrace;
 public interface IMaterial
 {
     bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator);
+    double ScatteringPDF(Ray rIn, HitRecord rec, Ray scattered);
 }
 
 public abstract class Material : IMaterial
@@ -19,6 +20,10 @@ public abstract class Material : IMaterial
     {
         return new Color(0.0, 0.0, 0.0);
     }
+    public virtual double ScatteringPDF(Ray rIn, HitRecord rec, Ray scattered)
+    {
+        return 0.0;
+    }
 }
 
 public class Lambertian(ITexture tex) : Material
@@ -29,12 +34,19 @@ public class Lambertian(ITexture tex) : Material
 
     public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
     {
-        var scatterDirection = rec.Normal + generator.RandomUnitVector();
+        var scatterDirection = generator.RandomVectorOnHemisphere(rec.Normal);
         // Catch degenerate scatter direction
         if (scatterDirection.NearZero) scatterDirection = rec.Normal;
         scattered.Overwrite(new Ray(rec.P, scatterDirection, rIn.Time));
         attenuation.Overwrite(Tex.Value(rec.U, rec.V, rec.P));
         return true;
+    }
+
+    public override double ScatteringPDF(Ray rIn, HitRecord rec, Ray scattered)
+    {
+        //var cosine = Vector3d.Dot(rec.Normal, scattered.Direction.UnitVector);
+        //return cosine < 0.0 ? 0.0 : cosine / Math.PI;
+        return 1.0 / (2.0 * Math.PI);
     }
 }
 

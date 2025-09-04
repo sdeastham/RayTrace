@@ -14,6 +14,7 @@ public class Color(double r, double g, double b) : Vector3d(r, g, b)
 
     public static Color operator *(Color c, Vector3d v) => new(c.R * v.X, c.G * v.Y, c.B * v.Z);
     public static Color operator *(Color c, double d) => new(c.R * d, c.G * d, c.B * d);
+    public static Color operator /(Color c, double d) => new(c.R / d, c.G / d, c.B / d);
 }
 
 public interface ITexture
