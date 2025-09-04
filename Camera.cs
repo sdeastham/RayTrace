@@ -25,6 +25,8 @@ public class Camera
 
     // Private
     private double PixelSamplesScale; // Scaling factor for a sum of pixel samples
+    private int SqrtSamplesPerPixel; // Square root of the number of samples per pixel, for stratified sampling
+    private double RecipSqrtSamplesPerPixel; // Reciprocal of the above
     public int ImageHeight { get; private set; } // Rendered image height in pixels
     private Vector3d? Center; // Camera center location
     private Vector3d? Pixel00Loc; // Location of pixel 0,0
@@ -51,11 +53,23 @@ public class Camera
     public Vector3d RenderSingle(int i, int j, Hittable world)
     {
         Vector3d pixelColor = new(0.0, 0.0, 0.0);
+        // With stratified sampling
+        for (int sJ = 0; sJ < SqrtSamplesPerPixel; sJ++)
+        {
+            for (int sI = 0; sI < SqrtSamplesPerPixel; sI++)
+            {
+                Ray r = GetRay(i, j, sI, sJ);
+                pixelColor += RayColor(r, MaxDepth, world);
+            }
+        }
+        // Without stratified sampling
+        /*
         for (int sample = 0; sample < SamplesPerPixel; sample++)
         {
             Ray r = GetRay(i, j);
             pixelColor += RayColor(r, MaxDepth, world);
         }
+        */
         return PixelSamplesScale * pixelColor;
     }
 
@@ -224,7 +238,11 @@ public class Camera
         DefocusDiskV = VBasis * defocusRadius;
 
         // For antialiasing
-        PixelSamplesScale = 1.0 / SamplesPerPixel;
+        SqrtSamplesPerPixel = (int)Math.Sqrt(SamplesPerPixel);
+        // Need to compensate for the fact that we might 
+        // not have a perfect square number of samples
+        PixelSamplesScale = 1.0 / (SqrtSamplesPerPixel * SqrtSamplesPerPixel);
+        RecipSqrtSamplesPerPixel = 1.0 / SqrtSamplesPerPixel;
 
         // Set up the array to store the pixel colors
         ImageData = new Vector3d[ImageHeight, ImageWidth];
@@ -253,11 +271,11 @@ public class Camera
         return colorFromEmission + colorFromScatter;
     }
 
-    private Ray GetRay(int i, int j)
+    private Ray GetRay(int i, int j, int sI, int sJ)
     {
         // Construct a camera ray originating from the defocus disk and directed at
-        // a randomly-sampled point around the pixel location i, j
-        var offset = SampleSquare();
+        // a randomly-sampled point around the pixel location i, j for stratified sample square sI, sJ
+        var offset = SampleSquareStratified(sI,sJ);
         var pixelSample = Pixel00Loc + ((i + offset.X) * PixelDeltaU) + ((j + offset.Y) * PixelDeltaV);
         Vector3d rayOrigin = (DefocusAngle <= 0.0) ? Center : DefocusDiskSample();
         var rayDirection = pixelSample - rayOrigin;
@@ -269,6 +287,17 @@ public class Camera
     {
         // Returns the vector to a random point in the [-0.5,-0.5] to [+0.5,+0.5] unit square
         return new Vector3d(Generator.RandomDouble() - 0.5f, Generator.RandomDouble() - 0.5, 0.0);
+    }
+
+    private Vector3d SampleSquareStratified(int sI, int sJ)
+    {
+        // Returns the vector to a random point in the [-0.5,-0.5] to [+0.5,+0.5] unit square
+        // using stratified sampling within the sqrtSamplesPerPixel x sqrtSamplesPerPixel sub-square
+        double jitterX = Generator.RandomDouble();
+        double jitterY = Generator.RandomDouble();
+        return new Vector3d((sI + jitterX) * RecipSqrtSamplesPerPixel - 0.5,
+                            (sJ + jitterY) * RecipSqrtSamplesPerPixel - 0.5,
+                            0.0);
     }
 
     private Vector3d DefocusDiskSample()

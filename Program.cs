@@ -17,7 +17,7 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
-        switch (9)
+        switch (7)
         {
             case 1: await BouncingSpheres(); break;
             case 2: await CheckeredSpheres(); break;
