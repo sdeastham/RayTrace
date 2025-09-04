@@ -14,6 +14,7 @@ public class Quad : Hittable
         Normal = n.UnitVector;
         D = Vector3d.Dot(Normal, Q);
         W = n / Vector3d.Dot(n, n);
+        Area = n.Length;
         SetBoundingBox(new AABB(new AABB(q, q + u + v), new AABB(q + u, q + v)));
         SetName(name);
     }
@@ -57,6 +58,7 @@ public class Quad : Hittable
     private Vector3d U, V, Q, W;
     private Vector3d Normal;
     private double D; // Locates the plane
+    private double Area;
 
     public static HittableList Box(Vector3d a, Vector3d b, Material mat)
     {
@@ -73,10 +75,27 @@ public class Quad : Hittable
         sides.Add(new Quad(new Vector3d(min.X, min.Y, max.Z), dx, dy, mat, "Front"));
         sides.Add(new Quad(new Vector3d(max.X, min.Y, max.Z), -dz, dy, mat, "Right"));
         sides.Add(new Quad(new Vector3d(max.X, min.Y, min.Z), -dx, dy, mat, "Back"));
-        sides.Add(new Quad(new Vector3d(min.X, min.Y, min.Z), dz,  dy, mat, "Left"));
+        sides.Add(new Quad(new Vector3d(min.X, min.Y, min.Z), dz, dy, mat, "Left"));
         sides.Add(new Quad(new Vector3d(min.X, max.Y, max.Z), dx, -dz, mat, "Top"));
-        sides.Add(new Quad(new Vector3d(min.X, min.Y, min.Z), dx,  dz, mat, "Bottom"));
+        sides.Add(new Quad(new Vector3d(min.X, min.Y, min.Z), dx, dz, mat, "Bottom"));
 
         return sides;
+    }
+
+    public override double PDFValue(Vector3d origin, Vector3d direction)
+    {
+        HitRecord rec = new();
+        if (!Hit(new Ray(origin, direction), new Interval(0.001, double.PositiveInfinity), rec))
+            return 0.0;
+
+        double distanceSquared = rec.T * rec.T * direction.LengthSquared;
+        double cosine = Math.Abs(Vector3d.Dot(direction, rec.Normal) / direction.Length);
+        return distanceSquared / (cosine * Area);
+    }
+    
+    public override Vector3d Random(Vector3d origin, RTRandom generator)
+    {
+        Vector3d randomPoint = Q + generator.RandomDouble() * U + generator.RandomDouble() * V;
+        return randomPoint - origin;
     }
 }

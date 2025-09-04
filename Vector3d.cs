@@ -60,6 +60,9 @@ public class Vector3d
         return new(e1, e2, e3);
     }
 
+    public static Vector3d Zero => new(0.0, 0.0, 0.0);
+    public static Vector3d One => new(1.0, 1.0, 1.0);
+
     // Operators
     public static Vector3d operator +(Vector3d v, double d) => new(v.X + d, v.Y + d, v.Z + d);
     public static Vector3d operator +(double d, Vector3d v) => v + d;

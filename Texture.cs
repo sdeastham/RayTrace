@@ -6,15 +6,18 @@ namespace RayTrace;
 
 public class Color(double r, double g, double b) : Vector3d(r, g, b)
 {
-    public static readonly Color black = new(0, 0, 0);
-    public static readonly Color white = new(1, 1, 1);
+    public static readonly Color Black = new(0, 0, 0);
+    public static readonly Color White = new(1, 1, 1);
     public double R => Data[0];
     public double G => Data[1];
     public double B => Data[2];
 
     public static Color operator *(Color c, Vector3d v) => new(c.R * v.X, c.G * v.Y, c.B * v.Z);
     public static Color operator *(Color c, double d) => new(c.R * d, c.G * d, c.B * d);
+    public static Color operator *(double d, Color c) => c * d;
     public static Color operator /(Color c, double d) => new(c.R / d, c.G / d, c.B / d);
+    public static Color operator +(Color c1, Color c2) => new(c1.R + c2.R, c1.G + c2.G, c1.B + c2.B);
+    public static Color operator -(Color c1, Color c2) => new(c1.R - c2.R, c1.G - c2.G, c1.B - c2.B);
 }
 
 public interface ITexture
@@ -26,7 +29,7 @@ public class Texture : ITexture
 {
     public virtual Color Value(double u, double v, Vector3d p)
     {
-        return Color.black;
+        return Color.Black;
     }
 }
 

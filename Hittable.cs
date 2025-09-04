@@ -59,29 +59,27 @@ public interface IHittable
     void SetBoundingBox(AABB value);
     string GetName();
     void SetName(string name);
+    Vector3d Random(Vector3d origin, RTRandom generator);
+    double PDFValue(Vector3d origin, Vector3d direction);
 }
 
 public abstract class Hittable : IHittable
 {
     public abstract bool Hit(Ray r, Interval rayT, HitRecord rec);
-    public virtual AABB GetBoundingBox()
-    {
-        return BoundingBox;
-    }
-    public virtual void SetBoundingBox(AABB value)
-    {
-        BoundingBox = value;
-    }
-    public virtual void SetName(string name)
-    {
-        Name = name;
-    }
-    public virtual string GetName()
-    {
-        return Name;
-    }
+    public virtual AABB GetBoundingBox() => BoundingBox;
+    public virtual void SetBoundingBox(AABB value) => BoundingBox = value;
+    public virtual void SetName(string name) => Name = name;
+    public virtual string GetName() => Name;
     protected AABB BoundingBox = new();
     public string Name = "Hittable"; // Default name
+    public virtual Vector3d Random(Vector3d origin, RTRandom generator)
+    {
+        return new Vector3d(1.0, 0.0, 0.0);
+    }
+    public virtual double PDFValue(Vector3d origin, Vector3d direction)
+    {
+        return 0.0;
+    }
 }
 
 public class Sphere : Hittable

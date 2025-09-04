@@ -161,10 +161,10 @@ internal class Program
 
         world.Add(new Quad(new Vector3d(555, 0, 0), new Vector3d(0, 0, 555), new Vector3d(0, 555, 0), green, "Left"));
         world.Add(new Quad(new Vector3d(0, 0, 0), new Vector3d(0, 555, 0), new Vector3d(0, 0, 555), red, "Right"));
-        world.Add(new Quad(new Vector3d(343, 554, 332), new Vector3d(-130, 0, 0), new Vector3d(0, 0, -105), light, "Light"));
         world.Add(new Quad(new Vector3d(0, 0, 0), new Vector3d(555, 0, 0), new Vector3d(0, 0, 555), white, "Lower"));
         world.Add(new Quad(new Vector3d(555, 555, 555), new Vector3d(-555, 0, 0), new Vector3d(0, 0, -555), white, "Upper"));
         world.Add(new Quad(new Vector3d(0, 0, 555), new Vector3d(555, 0, 0), new Vector3d(0, 555, 0), white, "Back"));
+        world.Add(new Quad(new Vector3d(343, 554, 332), new Vector3d(-130, 0, 0), new Vector3d(0, 0, -105), light, "Light"));
 
         Hittable box1 = Quad.Box(new Vector3d(0, 0, 0), new Vector3d(165, 330, 165), white);
         box1 = new RotateY(box1, 15);
@@ -175,6 +175,10 @@ internal class Program
         box2 = new RotateY(box2, -18);
         box2 = new Translate(box2, new Vector3d(130, 0, 65));
         world.Add(box2);
+
+        // Indicate the location of the light source(s)
+        Material emptyMaterial = new();
+        Quad lights = new(new Vector3d(343, 554, 332), new Vector3d(-130, 0, 0), new Vector3d(0, 0, -105), emptyMaterial, "Light");
 
         Camera cam = new()
         {
@@ -189,7 +193,16 @@ internal class Program
             DefocusAngle = 0.0,
             Background = new Color(0, 0, 0),
         };
-        cam.Render(world);
+        // Test render
+        bool testRender = false;
+        if (testRender)
+        {
+            // Fire just one ray, into the center of the viewfield
+            cam.SamplesPerPixel = 1;
+            cam.TestRay(world, lights, cam.ImageWidth / 2, (int)((double)cam.ImageWidth / cam.AspectRatio) / 2);
+            return;
+        }
+        cam.Render(world,lights);
         cam.WriteToPNG("cornellbox.png");
     }
 
@@ -388,7 +401,7 @@ internal class Program
                     {
                         // Metal
                         // Diffuse sphere
-                        var albedo = new Vector3d(sphereGen.NextDouble() * 0.5 + 0.5,
+                        var albedo = new Color(sphereGen.NextDouble() * 0.5 + 0.5,
                                                     sphereGen.NextDouble() * 0.5 + 0.5,
                                                     sphereGen.NextDouble() * 0.5 + 0.5);
                         var fuzz = sphereGen.NextDouble() * 0.5;
@@ -442,7 +455,7 @@ internal class Program
         {
             // Fire just one ray, into the center of the viewfield
             cam.SamplesPerPixel = 1;
-            cam.TestRay(world, cam.ImageWidth / 2, (int)((double)cam.ImageWidth / cam.AspectRatio) / 2);
+            cam.TestRay(world, null, cam.ImageWidth / 2, (int)((double)cam.ImageWidth / cam.AspectRatio) / 2);
         }
         else
         {

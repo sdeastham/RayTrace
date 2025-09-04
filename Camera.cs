@@ -50,42 +50,44 @@ public class Camera
         AspectRatio = aspectRatio;
     }
 
-    public Vector3d RenderSingle(int i, int j, Hittable world)
+    public Color RenderSingle(int i, int j, Hittable world, Hittable lights)
     {
-        Vector3d pixelColor = new(0.0, 0.0, 0.0);
+        Color pixelColor = new(0.0, 0.0, 0.0);
         // With stratified sampling
         for (int sJ = 0; sJ < SqrtSamplesPerPixel; sJ++)
         {
             for (int sI = 0; sI < SqrtSamplesPerPixel; sI++)
             {
                 Ray r = GetRay(i, j, sI, sJ);
-                pixelColor += RayColor(r, MaxDepth, world);
+                pixelColor += RayColor(r, MaxDepth, world, lights);
             }
         }
-        // Without stratified sampling
-        /*
-        for (int sample = 0; sample < SamplesPerPixel; sample++)
-        {
-            Ray r = GetRay(i, j);
-            pixelColor += RayColor(r, MaxDepth, world);
-        }
-        */
         return PixelSamplesScale * pixelColor;
     }
 
-    public void TestRay(Hittable world, int i, int j)
+    public void TestRay(Hittable world, Hittable? lights, int i, int j)
     {
+        if (lights is null)
+        {
+            Console.WriteLine("No lights hittable provided; aborting.");
+            return;
+        }
         Initialize();
         //Console.Clear();
         Console.WriteLine($"Testing ray through pixel {i},{j}");
         // i is in the x direction (width), j in the y direction (height)
         // This would normally be stored in ImageData[j,i]
-        Vector3d pixelColor = RenderSingle(i, j, world);
-        Console.WriteLine($"Test complete. Pixel color: {pixelColor.X:F6}, {pixelColor.Y:F6}, {pixelColor.Z:F6}");
+        Color pixelColor = RenderSingle(i, j, world, lights);
+        Console.WriteLine($"Test complete. Pixel color: {pixelColor.R:F6}, {pixelColor.G:F6}, {pixelColor.B:F6}");
     }
 
-    public void Render(Hittable world)
+    public void Render(Hittable world, Hittable? lights = null)
     {
+        if (lights is null)
+        {
+            Console.WriteLine("No lights hittable provided; aborting.");
+            return;
+        }
         Stopwatch stopwatch = new();
         stopwatch.Start();
         Initialize();
@@ -102,7 +104,7 @@ public class Camera
         {
             int i = ij % ImageWidth;
             int j = ij / ImageWidth; // Integer division
-            ImageData[j, i] = RenderSingle(i, j, world);
+            ImageData[j, i] = RenderSingle(i, j, world, lights);
             Interlocked.Increment(ref completedIterations);
             if (completedIterations % 100 == 0)
             {
@@ -248,7 +250,7 @@ public class Camera
         ImageData = new Vector3d[ImageHeight, ImageWidth];
     }
 
-    public Vector3d RayColor(Ray r, int depth, Hittable world)
+    public Color RayColor(Ray r, int depth, Hittable world, Hittable lights)
     {
         // If we've exceeded the bounce limit, no light gathered
         #if SINGLERAY
@@ -256,23 +258,30 @@ public class Camera
         #endif
         if (depth <= 0)
         {
-            return new Vector3d(0.0, 0.0, 0.0);
+            return new Color(0.0, 0.0, 0.0);
         }
         // Check if the ray collides with anything
         // Lower limit of 0.001 prevents floating-point nonsense where an intersection can be
         // found immediately after a bounce
         HitRecord rec = new();
-        if (!world.Hit(r, new Interval(0.001, double.PositiveInfinity), rec)) return Background;
-        Ray scattered = new(new Vector3d(0.0, 0.0, 0.0), new Vector3d(1.0, 0.0, 0.0));
-        Color attenuation = new(0.0, 0.0, 0.0);
+        if (!world.Hit(r, new Interval(0.001, double.PositiveInfinity), rec))
+        {
+            return Background;
+        }
         Color colorFromEmission = rec.Mat.Emitted(r, rec, rec.U, rec.V, rec.P);
-        double pdfValue;
-        if (!rec.Mat.Scatter(r, rec, attenuation, scattered, out pdfValue, Generator)) return colorFromEmission;
-        CosinePDF surfacePDF = new(rec.Normal);
-        scattered = new Ray(rec.P, surfacePDF.Generate(Generator), r.Time);
-        pdfValue = surfacePDF.Value(scattered.Direction);
+        if (!rec.Mat.Scatter(r, rec, out Color attenuation, out Ray scattered, out double pdfValue, Generator))
+        {
+            return colorFromEmission;
+        }
+        // Importance sample the lights in the scene
+        // This is a simple implementation that assumes all lights are in a single Hittable
+        // object, such as a HittableList
+        HittablePDF lightPDF = new(lights, rec.P);
+        scattered = new Ray(rec.P, lightPDF.Generate(Generator), r.Time);
+        pdfValue = lightPDF.Value(scattered.Direction);
         double scatteringPDF = rec.Mat.ScatteringPDF(r, rec, scattered);
-        Color colorFromScatter = attenuation * scatteringPDF * RayColor(scattered, depth - 1, world) / pdfValue;
+        Color sampleColor = RayColor(scattered, depth - 1, world, lights);
+        Color colorFromScatter = attenuation * scatteringPDF * sampleColor / pdfValue;
         return colorFromEmission + colorFromScatter;
     }
 

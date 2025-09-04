@@ -47,3 +47,19 @@ public class CosinePDF : PDF
         return ONB.Transform(dir);
     }
 }
+
+public class HittablePDF(IHittable objects, Vector3d origin) : PDF
+{
+    private Vector3d Origin = origin;
+    private IHittable Objects = objects;
+
+    public override double Value(Vector3d direction)
+    {
+        return Objects.PDFValue(Origin, direction);
+    }
+
+    public override Vector3d Generate(RTRandom generator)
+    {
+        return Objects.Random(Origin, generator);
+    }
+}
