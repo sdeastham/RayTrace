@@ -160,6 +160,11 @@ public class Camera
                 double g = LinearToGamma(rgb.Y);
                 double b = LinearToGamma(rgb.Z);
 
+                // Deal with NaNs
+                if (double.IsNaN(r)) r = 0.0;
+                if (double.IsNaN(g)) g = 0.0;
+                if (double.IsNaN(b)) b = 0.0;
+
                 int ir = (int)(256 * intensity.Clamp(r));
                 int ig = (int)(256 * intensity.Clamp(g));
                 int ib = (int)(256 * intensity.Clamp(b));
@@ -191,6 +196,11 @@ public class Camera
                     double r = LinearToGamma(rgb.X);
                     double g = LinearToGamma(rgb.Y);
                     double b = LinearToGamma(rgb.Z);
+
+                    // Deal with NaNs
+                    if (double.IsNaN(r)) r = 0.0;
+                    if (double.IsNaN(g)) g = 0.0;
+                    if (double.IsNaN(b)) b = 0.0;
 
                     int ir = (int)(256 * intensity.Clamp(r));
                     int ig = (int)(256 * intensity.Clamp(g));

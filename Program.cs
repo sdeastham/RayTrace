@@ -183,7 +183,9 @@ internal class Program
 
         // Indicate the location of the light source(s)
         Material emptyMaterial = new();
-        Quad lights = new(new Vector3d(343, 554, 332), new Vector3d(-130, 0, 0), new Vector3d(0, 0, -105), emptyMaterial, "Light");
+        HittableList lights = new();
+        lights.Add(new Quad(new Vector3d(343, 554, 332), new Vector3d(-130, 0, 0), new Vector3d(0, 0, -105), emptyMaterial, "Light"));
+        lights.Add(new Sphere(new Vector3d(190, 90, 190), 90, emptyMaterial, "GlassSphere"));
 
         Camera cam = new()
         {

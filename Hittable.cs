@@ -50,6 +50,24 @@ public class HittableList : Hittable
         }
         return hitAnything;
     }
+
+    public override double PDFValue(Vector3d origin, Vector3d direction)
+    {
+        double weight = 1.0 / Objects.Count;
+        double sum = 0.0;
+        foreach (Hittable obj in Objects)
+        {
+            sum += weight * obj.PDFValue(origin, direction);
+        }
+        return sum;
+    }
+
+    public override Vector3d Random(Vector3d origin, RTRandom generator)
+    {
+        int index = generator.RandomInt(0, Objects.Count - 1);
+        var obj = Objects.ElementAt(index);
+        return obj.Random(origin, generator);
+    }
 }
 
 public interface IHittable
