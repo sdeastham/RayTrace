@@ -74,4 +74,15 @@ public class RTRandom
             }
         }
     }
+
+    public Vector3d RandomCosineDirection()
+    {
+        double r1 = RandomDouble();
+        double r2 = RandomDouble();
+        double z = Math.Sqrt(1.0 - r2);
+        double phi = 2.0 * Math.PI * r1;
+        double x = Math.Cos(phi) * Math.Sqrt(r2);
+        double y = Math.Sin(phi) * Math.Sqrt(r2);
+        return new Vector3d(x, y, z);
+    }
 }

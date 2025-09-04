@@ -6,14 +6,15 @@ namespace RayTrace;
 
 public interface IMaterial
 {
-    bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator);
+    bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, out double pdf, RTRandom generator);
     double ScatteringPDF(Ray rIn, HitRecord rec, Ray scattered);
 }
 
 public abstract class Material : IMaterial
 {
-    public virtual bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
+    public virtual bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, out double pdf, RTRandom generator)
     {
+        pdf = 0.0;
         return false;
     }
     public virtual Color Emitted(double u, double v, Vector3d p)
@@ -32,13 +33,13 @@ public class Lambertian(ITexture tex) : Material
 
     protected ITexture Tex = tex;
 
-    public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
+    public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, out double pdf, RTRandom generator)
     {
-        var scatterDirection = generator.RandomVectorOnHemisphere(rec.Normal);
-        // Catch degenerate scatter direction
-        if (scatterDirection.NearZero) scatterDirection = rec.Normal;
-        scattered.Overwrite(new Ray(rec.P, scatterDirection, rIn.Time));
+        OrthoNormalBasis uvw = new(rec.Normal);
+        var scatterDirection = uvw.Transform(generator.RandomCosineDirection());
+        scattered.Overwrite(new Ray(rec.P, scatterDirection.UnitVector, rIn.Time));
         attenuation.Overwrite(Tex.Value(rec.U, rec.V, rec.P));
+        pdf = Vector3d.Dot(uvw.W, scattered.Direction) / Math.PI;
         return true;
     }
 
@@ -55,8 +56,9 @@ public class Metal(Vector3d albedo, double fuzz) : Material
     private readonly Vector3d Albedo = albedo;
     private readonly double Fuzz = fuzz < 1.0 ? fuzz : 1.0;
 
-    public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
+    public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, out double pdf, RTRandom generator)
     {
+        pdf = 1.0;
         Vector3d reflected = Vector3d.Reflect(rIn.Direction, rec.Normal);
         reflected = reflected.UnitVector + (Fuzz * generator.RandomUnitVector());
         scattered.Overwrite(new Ray(rec.P, reflected, rIn.Time));
@@ -70,8 +72,9 @@ public class Dielectric(double refractiveIndex) : Material
     // Refractive index in vacuum or air, or the ratio of the material's
     // refractive index over the refractive index of the enclosing media
     private readonly double RefractiveIndex = refractiveIndex;
-    public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
+    public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, out double pdf, RTRandom generator)
     {
+        pdf = 1.0;
         attenuation.Overwrite(new Vector3d(1.0, 1.0, 1.0));
         double ri = rec.FrontFace ? (1.0 / RefractiveIndex) : RefractiveIndex;
         Vector3d unitDirection = rIn.Direction.UnitVector;
@@ -115,10 +118,15 @@ public class Isotropic(ITexture tex) : Material
 {
     public Isotropic(Color albedo) : this(new SolidColor(albedo)) { }
     protected ITexture Tex = tex;
-    public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, RTRandom generator)
+    public override bool Scatter(Ray rIn, HitRecord rec, Vector3d attenuation, Ray scattered, out double pdf, RTRandom generator)
     {
         scattered.Overwrite(new Ray(rec.P, generator.RandomUnitVector(), rIn.Time));
         attenuation.Overwrite(Tex.Value(rec.U, rec.V, rec.P));
+        pdf = 1.0 / (4.0 * Math.PI);
         return true;
+    }
+    public override double ScatteringPDF(Ray rIn, HitRecord rec, Ray scattered)
+    {
+        return 1.0/(4.0 * Math.PI);
     }
 }
