@@ -6,17 +6,14 @@ namespace RayTrace;
 
 public interface IMaterial
 {
-    bool Scatter(Ray rIn, HitRecord rec, out Color attenuation, out Ray scattered, out double pdf, RTRandom generator);
+    bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator);
     double ScatteringPDF(Ray rIn, HitRecord rec, Ray scattered);
 }
 
 public class Material : IMaterial
 {
-    public virtual bool Scatter(Ray rIn, HitRecord rec, out Color attenuation, out Ray scattered, out double pdf, RTRandom generator)
+    public virtual bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec,RTRandom generator)
     {
-        pdf = 0.0;
-        scattered = new Ray(Vector3d.Zero, Vector3d.Zero);
-        attenuation = Color.Black;
         return false;
     }
     public virtual Color Emitted(Ray rIn, HitRecord rec, double u, double v, Vector3d p)
@@ -35,21 +32,18 @@ public class Lambertian(ITexture tex) : Material
 
     protected ITexture Tex = tex;
 
-    public override bool Scatter(Ray rIn, HitRecord rec, out Color attenuation, out Ray scattered, out double pdf, RTRandom generator)
+    public override bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator)
     {
-        OrthoNormalBasis uvw = new(rec.Normal);
-        var scatterDirection = uvw.Transform(generator.RandomCosineDirection());
-        scattered = new Ray(rec.P, scatterDirection.UnitVector, rIn.Time);
-        attenuation = Tex.Value(rec.U, rec.V, rec.P);
-        pdf = Vector3d.Dot(uvw.W, scattered.Direction) / Math.PI;
+        sRec.Attenuation = Tex.Value(rec.U, rec.V, rec.P);
+        sRec.SourcePDF = new CosinePDF(rec.Normal);
+        sRec.SkipPDF = false;
         return true;
     }
 
     public override double ScatteringPDF(Ray rIn, HitRecord rec, Ray scattered)
     {
-        //var cosine = Vector3d.Dot(rec.Normal, scattered.Direction.UnitVector);
-        //return cosine < 0.0 ? 0.0 : cosine / Math.PI;
-        return 1.0 / (2.0 * Math.PI);
+        double cosine = Vector3d.Dot(rec.Normal, scattered.Direction.UnitVector);
+        return cosine < 0.0 ? 0.0 : cosine / Math.PI;
     }
 }
 
@@ -58,14 +52,15 @@ public class Metal(Color albedo, double fuzz) : Material
     private readonly Color Albedo = albedo;
     private readonly double Fuzz = fuzz < 1.0 ? fuzz : 1.0;
 
-    public override bool Scatter(Ray rIn, HitRecord rec, out Color attenuation, out Ray scattered, out double pdf, RTRandom generator)
+    public override bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator)
     {
-        pdf = 1.0;
         Vector3d reflected = Vector3d.Reflect(rIn.Direction, rec.Normal);
         reflected = reflected.UnitVector + (Fuzz * generator.RandomUnitVector());
-        scattered = new Ray(rec.P, reflected, rIn.Time);
-        attenuation = Albedo;
-        return Vector3d.Dot(scattered.Direction, rec.Normal) > 0.0;
+        sRec.Attenuation = Albedo;
+        sRec.SourcePDF = null;
+        sRec.SkipPDF = true;
+        sRec.SkipPDFRay = new Ray(rec.P, reflected, rIn.Time);
+        return true;
     }
 }
 
@@ -74,10 +69,11 @@ public class Dielectric(double refractiveIndex) : Material
     // Refractive index in vacuum or air, or the ratio of the material's
     // refractive index over the refractive index of the enclosing media
     private readonly double RefractiveIndex = refractiveIndex;
-    public override bool Scatter(Ray rIn, HitRecord rec, out Color attenuation, out Ray scattered, out double pdf, RTRandom generator)
+    public override bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator)
     {
-        pdf = 1.0;
-        attenuation = Color.White;
+        sRec.Attenuation = Color.White;
+        sRec.SourcePDF = null;
+        sRec.SkipPDF = true;
         double ri = rec.FrontFace ? (1.0 / RefractiveIndex) : RefractiveIndex;
         Vector3d unitDirection = rIn.Direction.UnitVector;
         double cosTheta = Math.Min(Vector3d.Dot(-unitDirection, rec.Normal), 1.0);
@@ -93,7 +89,7 @@ public class Dielectric(double refractiveIndex) : Material
         {
             direction = Vector3d.Refract(unitDirection, rec.Normal, ri);
         }
-        scattered = new Ray(rec.P, direction, rIn.Time);
+        sRec.SkipPDFRay = new Ray(rec.P, direction, rIn.Time);
         return true;
     }
 
@@ -122,15 +118,23 @@ public class Isotropic(ITexture tex) : Material
 {
     public Isotropic(Color albedo) : this(new SolidColor(albedo)) { }
     protected ITexture Tex = tex;
-    public override bool Scatter(Ray rIn, HitRecord rec, out Color attenuation, out Ray scattered, out double pdf, RTRandom generator)
+    public override bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator)
     {
-        scattered = new Ray(rec.P, generator.RandomUnitVector(), rIn.Time);
-        attenuation = Tex.Value(rec.U, rec.V, rec.P);
-        pdf = 1.0 / (4.0 * Math.PI);
+        sRec.Attenuation = Tex.Value(rec.U, rec.V, rec.P);
+        sRec.SourcePDF = new SpherePDF();
+        sRec.SkipPDF = false;
         return true;
     }
     public override double ScatteringPDF(Ray rIn, HitRecord rec, Ray scattered)
     {
-        return 1.0/(4.0 * Math.PI);
+        return 1.0 / (4.0 * Math.PI);
     }
+}
+
+public class ScatterRecord
+{
+    public Color Attenuation;
+    public PDF? SourcePDF;
+    public bool SkipPDF;
+    public Ray? SkipPDFRay;
 }

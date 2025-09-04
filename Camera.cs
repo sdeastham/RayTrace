@@ -264,27 +264,31 @@ public class Camera
         // Lower limit of 0.001 prevents floating-point nonsense where an intersection can be
         // found immediately after a bounce
         HitRecord rec = new();
+        ScatterRecord sRec = new();
         if (!world.Hit(r, new Interval(0.001, double.PositiveInfinity), rec))
         {
             return Background;
         }
         Color colorFromEmission = rec.Mat.Emitted(r, rec, rec.U, rec.V, rec.P);
-        if (!rec.Mat.Scatter(r, rec, out Color attenuation, out Ray scattered, out double pdfValue, Generator))
+        if (!rec.Mat.Scatter(r, rec, sRec, Generator))
         {
             return colorFromEmission;
         }
+        if (sRec.SkipPDF)
+        {
+            return sRec.Attenuation * RayColor(sRec.SkipPDFRay, depth - 1, world, lights);
+        }
         // Importance sample the lights in the scene
-        // This is a simple implementation that assumes all lights are in a single Hittable
-        // object, such as a HittableList
-        HittablePDF lightPDF = new(lights, rec.P);
-        CosinePDF cosinePDF = new(rec.Normal);
+            // This is a simple implementation that assumes all lights are in a single Hittable
+            // object, such as a HittableList
+            HittablePDF lightPDF = new(lights, rec.P);
         // Create a mixture PDF that uses both the light and cosine PDFs
-        MixturePDF mixturePDF = new(cosinePDF, lightPDF);
-        scattered = new Ray(rec.P, mixturePDF.Generate(Generator), r.Time);
-        pdfValue = mixturePDF.Value(scattered.Direction);
+        MixturePDF mixturePDF = new(lightPDF, sRec.SourcePDF);
+        Ray scattered = new(rec.P, mixturePDF.Generate(Generator), r.Time);
+        double pdfValue = mixturePDF.Value(scattered.Direction);
         double scatteringPDF = rec.Mat.ScatteringPDF(r, rec, scattered);
         Color sampleColor = RayColor(scattered, depth - 1, world, lights);
-        Color colorFromScatter = attenuation * scatteringPDF * sampleColor / pdfValue;
+        Color colorFromScatter = sRec.Attenuation * scatteringPDF * sampleColor / pdfValue;
         return colorFromEmission + colorFromScatter;
     }
 

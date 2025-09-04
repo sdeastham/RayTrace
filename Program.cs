@@ -158,6 +158,7 @@ internal class Program
         Material white = new Lambertian(new Color(0.73, 0.73, 0.73));
         Material green = new Lambertian(new Color(0.12, 0.45, 0.15));
         Material light = new DiffuseLight(new Color(15, 15, 15));
+        Material aluminium = new Metal(new Color(0.8, 0.85, 0.88), 0.0);
 
         world.Add(new Quad(new Vector3d(555, 0, 0), new Vector3d(0, 0, 555), new Vector3d(0, 555, 0), green, "Left"));
         world.Add(new Quad(new Vector3d(0, 0, 0), new Vector3d(0, 555, 0), new Vector3d(0, 0, 555), red, "Right"));
@@ -166,7 +167,7 @@ internal class Program
         world.Add(new Quad(new Vector3d(0, 0, 555), new Vector3d(555, 0, 0), new Vector3d(0, 555, 0), white, "Back"));
         world.Add(new Quad(new Vector3d(343, 554, 332), new Vector3d(-130, 0, 0), new Vector3d(0, 0, -105), light, "Light"));
 
-        Hittable box1 = Quad.Box(new Vector3d(0, 0, 0), new Vector3d(165, 330, 165), white);
+        Hittable box1 = Quad.Box(new Vector3d(0, 0, 0), new Vector3d(165, 330, 165), aluminium);
         box1 = new RotateY(box1, 15);
         box1 = new Translate(box1, new Vector3d(265, 0, 295));
         world.Add(box1);
