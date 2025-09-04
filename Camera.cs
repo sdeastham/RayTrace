@@ -268,17 +268,9 @@ public class Camera
         Color colorFromEmission = rec.Mat.Emitted(r, rec, rec.U, rec.V, rec.P);
         double pdfValue;
         if (!rec.Mat.Scatter(r, rec, attenuation, scattered, out pdfValue, Generator)) return colorFromEmission;
-
-        Vector3d onLight = new(Generator.RandomDouble(213.0, 343.0), 554.0, Generator.RandomDouble(227.0,332.0));
-        Vector3d toLight = onLight - rec.P;
-        double distanceSquared = toLight.LengthSquared;
-        toLight = toLight.UnitVector;
-        if (Vector3d.Dot(toLight, rec.Normal) < 0.0) return colorFromEmission;
-        double lightArea = (343.0-213.0)*(332.0-227.0);
-        double lightCosine = Math.Abs(toLight.Y);
-        if (lightCosine < 0.000001) return colorFromEmission;
-        pdfValue = distanceSquared / (lightCosine * lightArea);
-        scattered.Overwrite(new Ray(rec.P, toLight, r.Time));
+        CosinePDF surfacePDF = new(rec.Normal);
+        scattered = new Ray(rec.P, surfacePDF.Generate(Generator), r.Time);
+        pdfValue = surfacePDF.Value(scattered.Direction);
         double scatteringPDF = rec.Mat.ScatteringPDF(r, rec, scattered);
         Color colorFromScatter = attenuation * scatteringPDF * RayColor(scattered, depth - 1, world) / pdfValue;
         return colorFromEmission + colorFromScatter;
