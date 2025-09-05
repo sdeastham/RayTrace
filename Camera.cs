@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -50,7 +51,7 @@ public class Camera
         AspectRatio = aspectRatio;
     }
 
-    public Color RenderSingle(int i, int j, Hittable world, Hittable lights)
+    public Color RenderSingle(int i, int j, Hittable world, Hittable? lights)
     {
         Color pixelColor = new(0.0, 0.0, 0.0);
         // With stratified sampling
@@ -83,11 +84,6 @@ public class Camera
 
     public void Render(Hittable world, Hittable? lights = null)
     {
-        if (lights is null)
-        {
-            Console.WriteLine("No lights hittable provided; aborting.");
-            return;
-        }
         Stopwatch stopwatch = new();
         stopwatch.Start();
         Initialize();
@@ -260,7 +256,7 @@ public class Camera
         ImageData = new Vector3d[ImageHeight, ImageWidth];
     }
 
-    public Color RayColor(Ray r, int depth, Hittable world, Hittable lights)
+    public Color RayColor(Ray r, int depth, Hittable world, Hittable? lights)
     {
         // If we've exceeded the bounce limit, no light gathered
         #if SINGLERAY
@@ -289,13 +285,17 @@ public class Camera
             return sRec.Attenuation * RayColor(sRec.SkipPDFRay, depth - 1, world, lights);
         }
         // Importance sample the lights in the scene
-            // This is a simple implementation that assumes all lights are in a single Hittable
-            // object, such as a HittableList
+        // This is a simple implementation that assumes all lights are in a single Hittable
+        // object, such as a HittableList
+        PDF finalPDF = sRec.SourcePDF;
+        if (lights is not null)
+        {
             HittablePDF lightPDF = new(lights, rec.P);
-        // Create a mixture PDF that uses both the light and cosine PDFs
-        MixturePDF mixturePDF = new(lightPDF, sRec.SourcePDF);
-        Ray scattered = new(rec.P, mixturePDF.Generate(Generator), r.Time);
-        double pdfValue = mixturePDF.Value(scattered.Direction);
+            // Create a mixture PDF that uses both the light and cosine PDFs
+            finalPDF = new MixturePDF(lightPDF, sRec.SourcePDF);
+        }
+        Ray scattered = new(rec.P, finalPDF.Generate(Generator), r.Time);
+        double pdfValue = finalPDF.Value(scattered.Direction);
         double scatteringPDF = rec.Mat.ScatteringPDF(r, rec, scattered);
         Color sampleColor = RayColor(scattered, depth - 1, world, lights);
         Color colorFromScatter = sRec.Attenuation * scatteringPDF * sampleColor / pdfValue;

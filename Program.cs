@@ -17,7 +17,7 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
-        switch (100)
+        switch (10)
         {
             case 1: await BouncingSpheres(); break;
             case 2: await CheckeredSpheres(); break;
@@ -36,6 +36,47 @@ internal class Program
     private static async Task CustomScene()
     {
         // Custom scene here
+        Console.WriteLine("Custom scene");
+
+        Material emptyMaterial = new();
+        Material redMaterial = new Lambertian(new Color(0.65, 0.05, 0.05));
+
+        double dx = 10;
+        double dy = 10;
+        double dz = 10;
+        // Make a simple box which will be filled with constant medium
+        // Initially the box is axis-aligned, then translate it to the desired location
+        Hittable fogBox = Quad.Box(new Vector3d(-dx/2, -dy/2, -dz/2), new Vector3d(dx/2, dy/2, dz/2), emptyMaterial);
+        fogBox = new Translate(fogBox, new Vector3d(0, 0, -20));
+
+        Hittable solidSphere = new Sphere(new Vector3d(0, 0, -50), 10, redMaterial, "SolidSphere");
+
+        HittableList fogBoxes = new();
+        fogBoxes.Add(new ConstantMedium(fogBox, 0.1, new Color(1, 1, 1), "Fog"));      
+
+        HittableList world = new();
+        world.Add(fogBoxes);
+        world.Add(solidSphere);
+
+        world = new HittableList(new BVHNode(world));
+
+        Camera cam = new()
+        {
+            ImageWidth = 400,
+            AspectRatio = 1.0,
+            SamplesPerPixel = 10,
+            MaxDepth = 5,
+            VerticalFOV = 40.0,
+            LookAt = new Vector3d(0, 0, -1),
+            LookFrom = new Vector3d(0, 0, 0),
+            UpVector = new Vector3d(0.0, 1.0, 0.0),
+            DefocusAngle = 0.0,
+            Background = new Color(0.7, 0.8, 1.0),
+        };
+
+        Hittable lights = null;
+        cam.Render(world,lights);
+        cam.WriteToPNG("customscene.png");
     }
 
     private static async Task FinalScene(int imageWidth, int samplesPerPixel, int maxDepth)
