@@ -17,7 +17,7 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
-        switch (7)
+        switch (100)
         {
             case 1: await BouncingSpheres(); break;
             case 2: await CheckeredSpheres(); break;
@@ -28,12 +28,19 @@ internal class Program
             case 7: await CornellBox(); break;
             case 8: await CornellSmoke(); break;
             case 9: await FinalScene(400, 20, 4); break;
-            default: await FinalScene(400, 250, 4); break;
+            case 10: await CustomScene(); break;
+            default: await FinalScene(400, 50, 6); break;
         }
+    }
+
+    private static async Task CustomScene()
+    {
+        // Custom scene here
     }
 
     private static async Task FinalScene(int imageWidth, int samplesPerPixel, int maxDepth)
     {
+        Console.WriteLine($"Final scene: {imageWidth}x{imageWidth}, {samplesPerPixel} spp, max depth {maxDepth}");
         HittableList boxes1 = new();
         Material ground = new Lambertian(new Color(0.48, 0.83, 0.53));
         RTRandom generator = new();
@@ -63,10 +70,12 @@ internal class Program
         Vector3d center2 = center1 + new Vector3d(30, 0, 0);
         Material movingSphereMaterial = new Lambertian(new Color(0.7, 0.3, 0.1));
         world.Add(new Sphere(center1, center2, 50, movingSphereMaterial, "MovingSphere"));
+
+
         world.Add(new Sphere(new Vector3d(260, 150, 45), 50, new Dielectric(1.5), "InnerGlassSphere"));
         world.Add(new Sphere(new Vector3d(0, 150, 145), 50, new Metal(new Color(0.8, 0.8, 0.9), 1.0), "MetalSphere"));
 
-        Hittable boundary = new Sphere(new Vector3d(260, 150, 145), 50, new Dielectric(1.5), "GlassSphereHittable");
+        Hittable boundary = new Sphere(new Vector3d(360, 150, 145), 70, new Dielectric(1.5), "GlassSphereHittable");
         world.Add(boundary);
         world.Add(new ConstantMedium(boundary, 0.2, new Color(0.2, 0.4, 0.9), "InnerConstantMedium"));
         boundary = new Sphere(new Vector3d(0, 0, 0), 5000, new Dielectric(1.5), "WorldGasHittable");
@@ -88,6 +97,11 @@ internal class Program
 
         world.Add(new Translate(new RotateY(new BVHNode(boxes2), 15), new Vector3d(-100, 270, 395)));
 
+        // Indicate the location of the light source(s)
+        Material emptyMaterial = new();
+        HittableList lights = new();
+        lights.Add(new Quad(new Vector3d(123, 554, 147), new Vector3d(300, 0, 0), new Vector3d(0, 0, 265), emptyMaterial, "Light"));
+
         Camera cam = new()
         {
             ImageWidth = imageWidth,
@@ -102,7 +116,7 @@ internal class Program
             Background = new Color(0, 0, 0),
         };
 
-        cam.Render(world);
+        cam.Render(world, lights);
         cam.WriteToPNG("finalscene.png");
     }
 
@@ -133,11 +147,16 @@ internal class Program
         world.Add(new ConstantMedium(box1, 0.01, new Color(0, 0, 0), "Fog"));
         world.Add(new ConstantMedium(box2, 0.01, new Color(1, 1, 1), "Smoke"));
 
+        // Indicate the location of the light source(s)
+        Material emptyMaterial = new();
+        HittableList lights = new();
+        lights.Add(new Quad(new Vector3d(113, 554, 127), new Vector3d(330, 0, 0), new Vector3d(0, 0, 305), emptyMaterial, "Light"));
+
         Camera cam = new()
         {
             ImageWidth = 600,
             AspectRatio = 1.0,
-            SamplesPerPixel = 200,
+            SamplesPerPixel = 10,
             MaxDepth = 50,
             VerticalFOV = 40.0,
             LookAt = new Vector3d(278, 278, 0),
@@ -146,7 +165,7 @@ internal class Program
             DefocusAngle = 0.0,
             Background = new Color(0, 0, 0),
         };
-        cam.Render(world);
+        cam.Render(world, lights);
         cam.WriteToPNG("cornellsmoke.png");
     }
 
