@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using SixLabors.ImageSharp.ColorSpaces;
 
 namespace RayTrace;
 
@@ -28,44 +29,66 @@ internal class Program
             case 7: await CornellBox(); break;
             case 8: await CornellSmoke(); break;
             case 9: await FinalScene(400, 20, 4); break;
-            case 10: await CustomScene(); break;
+            case 10: await PinkTrails(imageWidth:400, samplesPerPixel: 10, maxDepth: 5); break;
             default: await FinalScene(400, 50, 6); break;
         }
     }
 
-    private static async Task CustomScene()
+    private static async Task PinkTrails(int imageWidth = 400, int samplesPerPixel = 10, int maxDepth = 5)
     {
-        // Custom scene here
-        Console.WriteLine("Custom scene");
+        Console.WriteLine("Simple pink horizontal trails scene");
 
         Material emptyMaterial = new();
-        Material redMaterial = new Lambertian(new Color(0.65, 0.05, 0.05));
 
-        double dx = 10;
-        double dy = 10;
-        double dz = 10;
+        // Currently fog is purely scattering
+        HittableList fogBoxes = new();
+
+        double dx = 10000; // Along-track distance
+        double dy = 100; // Cross-track distance of one cell
+        double dz = 100; // "Altitude" depth of one cell
+
+        double baseAltitude = 10000; // Altitude of the layer bottom, meters
+        int nCellY = 10;
+        int nLayers = 4;
+        double yBase = -nCellY * dy / 2.0;
+
         // Make a simple box which will be filled with constant medium
         // Initially the box is axis-aligned, then translate it to the desired location
         Hittable fogBox = Quad.Box(new Vector3d(-dx/2, -dy/2, -dz/2), new Vector3d(dx/2, dy/2, dz/2), emptyMaterial);
-        fogBox = new Translate(fogBox, new Vector3d(0, 0, -20));
 
-        Hittable solidSphere = new Sphere(new Vector3d(0, 0, -50), 10, redMaterial, "SolidSphere");
+        // The scattering probability is strictly 
+        double particleRadius = 1.0e-6; // m
+        double numberDensity = 1.0e8; // number per m3. 1e8: 100 per cm3; 1e12: 1 million per cm3
+        double scatteringCrossSection = Math.PI * particleRadius * particleRadius; // m2 per particle
+        double opticalDensity = numberDensity * scatteringCrossSection; // This is optical depth divided by distance
 
-        HittableList fogBoxes = new();
-        fogBoxes.Add(new ConstantMedium(fogBox, 0.1, new Color(1, 1, 1), "Fog"));      
+        for (int iLayer = 0; iLayer < nLayers; iLayer++)
+        {
+            double layerBase = baseAltitude + iLayer * dz;
+            for (int iCellY = 0; iCellY < nCellY; iCellY++)
+            {
+                double localDensity = iCellY % 2 == 0 ? 0 : opticalDensity * iCellY;
+                //Console.WriteLine($"{iCellY} -> {localDensity:E10}");
+                Hittable translatedBox = new Translate(fogBox, new Vector3d(0, yBase + (dy * iCellY), -layerBase));
+                // The material in a constant medium object is "Isotropic". Wavelength-dependent absorption
+                // is defined by the the color. Scattering is currently entirely isotropic and 
+                // wavelength-independent.
+                fogBoxes.Add(new ConstantMedium(translatedBox, localDensity, new Color(1.0, 0.0, 1.0), "Fog"));
+            }
+        }
 
         HittableList world = new();
         world.Add(fogBoxes);
-        world.Add(solidSphere);
+        //world.Add(solidSphere);
 
         world = new HittableList(new BVHNode(world));
 
         Camera cam = new()
         {
-            ImageWidth = 400,
+            ImageWidth = imageWidth,
             AspectRatio = 1.0,
-            SamplesPerPixel = 10,
-            MaxDepth = 5,
+            SamplesPerPixel = samplesPerPixel,
+            MaxDepth = maxDepth,
             VerticalFOV = 40.0,
             LookAt = new Vector3d(0, 0, -1),
             LookFrom = new Vector3d(0, 0, 0),
