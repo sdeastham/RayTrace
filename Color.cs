@@ -14,6 +14,21 @@ public class ColorRGB(double r, double g, double b) : Vector3d(r, g, b)
     public static ColorRGB operator /(ColorRGB c, double d) => new(c.R / d, c.G / d, c.B / d);
     public static ColorRGB operator +(ColorRGB c1, ColorRGB c2) => new(c1.R + c2.R, c1.G + c2.G, c1.B + c2.B);
     public static ColorRGB operator -(ColorRGB c1, ColorRGB c2) => new(c1.R - c2.R, c1.G - c2.G, c1.B - c2.B);
+
+    public double Reflectance(double wavelength)
+    {
+        // Very simple model: return the intensity of the color channel corresponding to the wavelength
+        double intensity = 0.0;
+        if (wavelength < 380e-9 || wavelength > 780e-9)
+            return 0.0; // Outside visible range
+        if (wavelength >= 620e-9) // Red
+            intensity = R;
+        else if (wavelength >= 495e-9) // Green
+            intensity = G;
+        else if (wavelength >= 450e-9) // Blue
+            intensity = B;
+        return intensity;
+    }
 }
 
 public class ColorXYZ(double x, double y, double z) : Vector3d(x, y, z)

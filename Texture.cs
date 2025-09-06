@@ -27,7 +27,7 @@ public class SolidColor : Texture
     public SolidColor(double r, double g, double b) : this(new ColorRGB(r, g, b)) { }
     public override double Value(double u, double v, Vector3d p, double wavelength)
     {
-        return (Albedo.R + Albedo.G + Albedo.B) / 3.0; // Return grayscale value
+        return Albedo.Reflectance(wavelength);
     }
 }
 
