@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.VisualBasic;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.ColorSpaces.Conversion;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace RayTrace;
@@ -22,7 +23,7 @@ public class Camera
     public Vector3d UpVector = new(0.0, 1.0, 0.0); // Camera-relative "up" direction
     public double DefocusAngle = 0.0; // Variation angle of rays through each pixel
     public double FocusDist = 10.0; // Distance from camera LookFrom point to the plane of perfect focus
-    public Color Background = new(0.0, 0.0, 0.0); // Scene background color
+    public ColorRGB Background = new(0.0, 0.0, 0.0); // Scene background color
 
     // Private
     private double PixelSamplesScale; // Scaling factor for a sum of pixel samples
@@ -51,34 +52,30 @@ public class Camera
         AspectRatio = aspectRatio;
     }
 
-    public Color RenderSingle(int i, int j, Hittable world, Hittable? lights)
+    public ColorRGB RenderPixel(int i, int j, Hittable world, Hittable? lights)
     {
-        Color pixelColor = new(0.0, 0.0, 0.0);
+        ColorXYZ pixelXYZ = new(0, 0, 0); // Color in XYZ space
         // With stratified sampling
         for (int sJ = 0; sJ < SqrtSamplesPerPixel; sJ++)
         {
             for (int sI = 0; sI < SqrtSamplesPerPixel; sI++)
             {
                 Ray r = GetRay(i, j, sI, sJ);
-                pixelColor += RayColor(r, MaxDepth, world, lights);
+                double rayIntensity = RayIntensity(r, MaxDepth, world, lights);
+                pixelXYZ.Add(rayIntensity * PixelSamplesScale, r.Wavelength * 1.0e9); // Wavelength in nm
             }
         }
-        return PixelSamplesScale * pixelColor;
+        return pixelXYZ.ToRGB();
     }
 
     public void TestRay(Hittable world, Hittable? lights, int i, int j)
     {
-        if (lights is null)
-        {
-            Console.WriteLine("No lights hittable provided; aborting.");
-            return;
-        }
         Initialize();
         //Console.Clear();
         Console.WriteLine($"Testing ray through pixel {i},{j}");
         // i is in the x direction (width), j in the y direction (height)
         // This would normally be stored in ImageData[j,i]
-        Color pixelColor = RenderSingle(i, j, world, lights);
+        ColorRGB pixelColor = RenderPixel(i, j, world, lights);
         Console.WriteLine($"Test complete. Pixel color: {pixelColor.R:F6}, {pixelColor.G:F6}, {pixelColor.B:F6}");
     }
 
@@ -100,7 +97,7 @@ public class Camera
         {
             int i = ij % ImageWidth;
             int j = ij / ImageWidth; // Integer division
-            ImageData[j, i] = RenderSingle(i, j, world, lights);
+            ImageData[j, i] = RenderPixel(i, j, world, lights);
             Interlocked.Increment(ref completedIterations);
             if (completedIterations % 100 == 0)
             {
@@ -256,7 +253,7 @@ public class Camera
         ImageData = new Vector3d[ImageHeight, ImageWidth];
     }
 
-    public Color RayColor(Ray r, int depth, Hittable world, Hittable? lights)
+    public double RayIntensity(Ray r, int depth, Hittable world, Hittable? lights)
     {
         // If we've exceeded the bounce limit, no light gathered
         #if SINGLERAY
@@ -264,7 +261,7 @@ public class Camera
         #endif
         if (depth <= 0)
         {
-            return new Color(0.0, 0.0, 0.0);
+            return 0.0;
         }
         // Check if the ray collides with anything
         // Lower limit of 0.001 prevents floating-point nonsense where an intersection can be
@@ -273,16 +270,16 @@ public class Camera
         ScatterRecord sRec = new();
         if (!world.Hit(r, new Interval(0.001, double.PositiveInfinity), rec))
         {
-            return Background;
+            return 0.0; // Background is a black void
         }
-        Color colorFromEmission = rec.Mat.Emitted(r, rec, rec.U, rec.V, rec.P);
+        double emissionIntensity = rec.Mat.Emitted(r, rec, rec.U, rec.V, rec.P);
         if (!rec.Mat.Scatter(r, rec, sRec, Generator))
         {
-            return colorFromEmission;
+            return emissionIntensity;
         }
         if (sRec.SkipPDF)
         {
-            return sRec.Attenuation * RayColor(sRec.SkipPDFRay, depth - 1, world, lights);
+            return sRec.Attenuation * RayIntensity(sRec.SkipPDFRay, depth - 1, world, lights);
         }
         // Importance sample the lights in the scene
         // This is a simple implementation that assumes all lights are in a single Hittable
@@ -297,9 +294,9 @@ public class Camera
         Ray scattered = new(rec.P, finalPDF.Generate(Generator), r.Time);
         double pdfValue = finalPDF.Value(scattered.Direction);
         double scatteringPDF = rec.Mat.ScatteringPDF(r, rec, scattered);
-        Color sampleColor = RayColor(scattered, depth - 1, world, lights);
-        Color colorFromScatter = sRec.Attenuation * scatteringPDF * sampleColor / pdfValue;
-        return colorFromEmission + colorFromScatter;
+        double sampleIntensity = RayIntensity(scattered, depth - 1, world, lights);
+        double scatterIntensity = sRec.Attenuation * scatteringPDF * sampleIntensity / pdfValue;
+        return emissionIntensity + scatterIntensity;
     }
 
     private Ray GetRay(int i, int j, int sI, int sJ)
@@ -311,7 +308,9 @@ public class Camera
         Vector3d rayOrigin = (DefocusAngle <= 0.0) ? Center : DefocusDiskSample();
         var rayDirection = pixelSample - rayOrigin;
         double rayTime = Generator.RandomDouble();
-        return new Ray(rayOrigin, rayDirection, rayTime);
+        //double rayWavelength = 550.0e-9; // Monochromatic for now
+        double rayWavelength = Generator.RandomDouble(400e-9, 700e-9); // Random wavelength between 400 and 700 nm
+        return new Ray(rayOrigin, rayDirection, rayTime, rayWavelength);
     }
 
     private Vector3d SampleSquare()

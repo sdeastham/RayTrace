@@ -13,7 +13,7 @@ public class ConstantMedium : Hittable
         Name = name;
     }
 
-    public ConstantMedium(Hittable boundary, double density, Color color, string name = "ConstantMedium")
+    public ConstantMedium(Hittable boundary, double density, ColorRGB color, string name = "ConstantMedium")
     {
         Boundary = boundary;
         Density = density;

@@ -4,46 +4,30 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace RayTrace;
 
-public class Color(double r, double g, double b) : Vector3d(r, g, b)
-{
-    public static readonly Color Black = new(0, 0, 0);
-    public static readonly Color White = new(1, 1, 1);
-    public double R => Data[0];
-    public double G => Data[1];
-    public double B => Data[2];
-
-    public static Color operator *(Color c, Vector3d v) => new(c.R * v.X, c.G * v.Y, c.B * v.Z);
-    public static Color operator *(Color c, double d) => new(c.R * d, c.G * d, c.B * d);
-    public static Color operator *(double d, Color c) => c * d;
-    public static Color operator /(Color c, double d) => new(c.R / d, c.G / d, c.B / d);
-    public static Color operator +(Color c1, Color c2) => new(c1.R + c2.R, c1.G + c2.G, c1.B + c2.B);
-    public static Color operator -(Color c1, Color c2) => new(c1.R - c2.R, c1.G - c2.G, c1.B - c2.B);
-}
-
 public interface ITexture
 {
-    Color Value(double u, double v, Vector3d p);
+    double Value(double u, double v, Vector3d p, double wavelength);
 }
 
 public class Texture : ITexture
 {
-    public virtual Color Value(double u, double v, Vector3d p)
+    public virtual double Value(double u, double v, Vector3d p, double wavelength)
     {
-        return Color.Black;
+        return 0.0;
     }
 }
 
 public class SolidColor : Texture
 {
-    private Color Albedo;
-    public SolidColor(Color albedo)
+    private ColorRGB Albedo;
+    public SolidColor(ColorRGB albedo)
     {
         Albedo = albedo;
     }
-    public SolidColor(double r, double g, double b) : this(new Color(r, g, b)) { }
-    public override Color Value(double u, double v, Vector3d p)
+    public SolidColor(double r, double g, double b) : this(new ColorRGB(r, g, b)) { }
+    public override double Value(double u, double v, Vector3d p, double wavelength)
     {
-        return Albedo;
+        return (Albedo.R + Albedo.G + Albedo.B) / 3.0; // Return grayscale value
     }
 }
 
@@ -59,9 +43,9 @@ public class CheckerTexture : Texture
         Even = even;
     }
 
-    public CheckerTexture(double scale, Color odd, Color even) : this(scale, new SolidColor(odd), new SolidColor(even)) { }
+    public CheckerTexture(double scale, ColorRGB odd, ColorRGB even) : this(scale, new SolidColor(odd), new SolidColor(even)) { }
 
-    public override Color Value(double u, double v, Vector3d p)
+    public override double Value(double u, double v, Vector3d p, double wavelength)
     {
         // Compute the checkerboard pattern
         //double sines = Math.Sin(InvScale * u) * Math.Sin(InvScale * v);
@@ -70,7 +54,7 @@ public class CheckerTexture : Texture
         int xInteger = (int)Math.Floor(InvScale * p.X);
         int yInteger = (int)Math.Floor(InvScale * p.Y);
         int zInteger = (int)Math.Floor(InvScale * p.Z);
-        return (xInteger + yInteger + zInteger) % 2 == 0 ? Odd.Value(u, v, p) : Even.Value(u, v, p);
+        return (xInteger + yInteger + zInteger) % 2 == 0 ? Odd.Value(u, v, p, wavelength) : Even.Value(u, v, p, wavelength);
     }
 }
 
@@ -80,12 +64,15 @@ public class ImageTexture(Image img) : Texture
     public ImageTexture(string filename) : this(Image.Load(filename)) { }
     private Image<Rgba32> ImageData = img.CloneAs<Rgba32>();
 
-    public override Color Value(double u, double v, Vector3d p)
+    public override double Value(double u, double v, Vector3d p, double wavelength)
     {
         // If we have no image, return solid cyan as a debugging aid
         if (ImageData == null)
         {
-            return new Color(0, 1, 1);
+            if (wavelength >= 490e-9 && wavelength <= 520e-9) return 1.0; // Green
+            if (wavelength >= 450e-9 && wavelength < 490e-9) return 0.5; // Blue-green
+            if (wavelength >= 620e-9 && wavelength <= 750e-9) return 0.5; // Red
+            return 0.0; // Other wavelengths - return black
         }
 
         // Clamp input texture coordinates to [0,1] x [1,0]
@@ -104,7 +91,8 @@ public class ImageTexture(Image img) : Texture
         double r = pixel.X;
         double g = pixel.Y;
         double b = pixel.Z;
-        return new Color(r, g, b);
+        //return new Color(r, g, b);
+        return (r + g + b) / 3.0; // Return grayscale value
     }
 }
 
@@ -114,10 +102,10 @@ class NoiseTexture(double scale) : Texture
     // the higher-frequency the noise.
     private readonly Perlin Noise = new();
     private readonly double Scale = scale;
-    public override Color Value(double u, double v, Vector3d p)
+    public override double Value(double u, double v, Vector3d p, double wavelength)
     {
         //return new Color(1.0, 1.0, 1.0) * 0.5 * (1.0 + Noise.Noise(Scale * p));
         //return new Color(1.0, 1.0, 1.0) * Noise.Turbulence(p, 7);
-        return new Color(0.5, 0.5, 0.5) * (1.0 + Math.Sin(Scale * p.Z + 10 * Noise.Turbulence(p, 7)));
+        return 0.5 * (1.0 + Math.Sin(Scale * p.Z + 10 * Noise.Turbulence(p, 7)));
     }
 }

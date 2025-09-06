@@ -8,33 +8,25 @@ public interface IMaterial
 {
     bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator);
     double ScatteringPDF(Ray rIn, HitRecord rec, Ray scattered);
+    double Emitted(Ray rIn, HitRecord rec, double u, double v, Vector3d p);
 }
 
 public class Material : IMaterial
 {
-    public virtual bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec,RTRandom generator)
-    {
-        return false;
-    }
-    public virtual Color Emitted(Ray rIn, HitRecord rec, double u, double v, Vector3d p)
-    {
-        return Color.Black;
-    }
-    public virtual double ScatteringPDF(Ray rIn, HitRecord rec, Ray scattered)
-    {
-        return 0.0;
-    }
+    public virtual bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator) => false;
+    public virtual double Emitted(Ray rIn, HitRecord rec, double u, double v, Vector3d p) => 0.0;
+    public virtual double ScatteringPDF(Ray rIn, HitRecord rec, Ray scattered) => 0.0;
 }
 
 public class Lambertian(ITexture tex) : Material
 {
-    public Lambertian(Color albedo) : this(new SolidColor(albedo)) { }
+    public Lambertian(ColorRGB albedo) : this(new SolidColor(albedo)) { }
 
     protected ITexture Tex = tex;
 
     public override bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator)
     {
-        sRec.Attenuation = Tex.Value(rec.U, rec.V, rec.P);
+        sRec.Attenuation = Tex.Value(rec.U, rec.V, rec.P, rIn.Wavelength);
         sRec.SourcePDF = new CosinePDF(rec.Normal);
         sRec.SkipPDF = false;
         return true;
@@ -47,9 +39,9 @@ public class Lambertian(ITexture tex) : Material
     }
 }
 
-public class Metal(Color albedo, double fuzz) : Material
+public class Metal(double albedo, double fuzz) : Material
 {
-    private readonly Color Albedo = albedo;
+    private readonly double Albedo = albedo; // Assume same reflectivity at all wavelengths
     private readonly double Fuzz = fuzz < 1.0 ? fuzz : 1.0;
 
     public override bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator)
@@ -71,7 +63,7 @@ public class Dielectric(double refractiveIndex) : Material
     private readonly double RefractiveIndex = refractiveIndex;
     public override bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator)
     {
-        sRec.Attenuation = Color.White;
+        sRec.Attenuation = 1.0; // No attenuation
         sRec.SourcePDF = null;
         sRec.SkipPDF = true;
         double ri = rec.FrontFace ? (1.0 / RefractiveIndex) : RefractiveIndex;
@@ -104,23 +96,23 @@ public class Dielectric(double refractiveIndex) : Material
 
 public class DiffuseLight(ITexture tex) : Material
 {
-    public DiffuseLight(Color emit) : this(new SolidColor(emit)) { }
-    public override Color Emitted(Ray rIn, HitRecord rec, double u, double v, Vector3d p)
+    public DiffuseLight(ColorRGB emit) : this(new SolidColor(emit)) { }
+    public override double Emitted(Ray rIn, HitRecord rec, double u, double v, Vector3d p)
     {
         // Light is only emitted on the front face
-        if (!rec.FrontFace) return Color.Black;
-        return Tex.Value(u, v, p);
+        if (!rec.FrontFace) return 0.0;
+        return Tex.Value(u, v, p, rIn.Wavelength);
     }
     protected ITexture Tex = tex;
 }
 
 public class Isotropic(ITexture tex) : Material
 {
-    public Isotropic(Color albedo) : this(new SolidColor(albedo)) { }
+    public Isotropic(ColorRGB albedo) : this(new SolidColor(albedo)) { }
     protected ITexture Tex = tex;
     public override bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator)
     {
-        sRec.Attenuation = Tex.Value(rec.U, rec.V, rec.P);
+        sRec.Attenuation = Tex.Value(rec.U, rec.V, rec.P, rIn.Wavelength);
         sRec.SourcePDF = new SpherePDF();
         sRec.SkipPDF = false;
         return true;
@@ -133,7 +125,7 @@ public class Isotropic(ITexture tex) : Material
 
 public class ScatterRecord
 {
-    public Color Attenuation;
+    public double Attenuation; // At the given wavelength
     public PDF? SourcePDF;
     public bool SkipPDF;
     public Ray? SkipPDFRay;
