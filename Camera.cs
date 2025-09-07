@@ -256,9 +256,9 @@ public class Camera
     public double RayIntensity(Ray r, int depth, Hittable world, Hittable? lights)
     {
         // If we've exceeded the bounce limit, no light gathered
-        #if SINGLERAY
+#if SINGLERAY
         Console.WriteLine($"Ray generated at depth {depth}");
-        #endif
+#endif
         if (depth <= 0)
         {
             return 0.0;

@@ -26,10 +26,10 @@ internal class Program
             case 4: await PerlinSpheres(); break;
             case 5: await Quads(); break;
             case 6: await SimpleLight(); break;
-            case 7: await CornellBox(400,150,50); break;
+            case 7: await CornellBox(400, 150, 50); break;
             case 8: await CornellSmoke(); break;
             case 9: await FinalScene(400, 20, 4); break;
-            case 10: await PinkTrails(imageWidth:400, samplesPerPixel: 10, maxDepth: 5); break;
+            case 10: await PinkTrails(imageWidth: 400, samplesPerPixel: 10, maxDepth: 5); break;
             default: await FinalScene(400, 50, 6); break;
         }
     }
@@ -54,7 +54,7 @@ internal class Program
 
         // Make a simple box which will be filled with constant medium
         // Initially the box is axis-aligned, then translate it to the desired location
-        Hittable fogBox = Quad.Box(new Vector3d(-dx/2, -dy/2, -dz/2), new Vector3d(dx/2, dy/2, dz/2), emptyMaterial);
+        Hittable fogBox = Quad.Box(new Vector3d(-dx / 2, -dy / 2, -dz / 2), new Vector3d(dx / 2, dy / 2, dz / 2), emptyMaterial);
 
         // The scattering probability is strictly 
         double particleRadius = 1.0e-6; // m
@@ -98,7 +98,7 @@ internal class Program
         };
 
         Hittable lights = null;
-        cam.Render(world,lights);
+        cam.Render(world, lights);
         cam.WriteToPNG("customscene.png");
     }
 
@@ -235,12 +235,25 @@ internal class Program
 
     private static async Task CornellBox(int imageWidth = 600, int samplesPerPixel = 10, int maxDepth = 50)
     {
+        SpectralMapping mapping = new("srgb.coeff");
         HittableList world = new();
 
-        Material red = new Lambertian(new ColorRGB(0.65, 0.05, 0.05));
-        Material white = new Lambertian(new ColorRGB(0.73, 0.73, 0.73));
-        Material green = new Lambertian(new ColorRGB(0.12, 0.45, 0.15));
-        Material light = new DiffuseLight(new ColorRGB(15, 15, 15));
+        ColorRGB redColor = new(0.65, 0.05, 0.05);
+        ColorRGB whiteColor = new(0.73, 0.73, 0.73);
+        ColorRGB greenColor = new(0.12, 0.45, 0.15);
+        ColorRGB lightColor = new(15, 15, 15);
+
+        // Set up coefficients  for spectral reflectance model
+        redColor.SetCoefficientsForJakobHanika2019Model(mapping);
+        whiteColor.SetCoefficientsForJakobHanika2019Model(mapping);
+        greenColor.SetCoefficientsForJakobHanika2019Model(mapping);
+        //lightColor.SetCoefficientsForJakobHanika2019Model(mapping);
+
+        Material red = new Lambertian(redColor);
+        Material white = new Lambertian(whiteColor);
+        Material green = new Lambertian(greenColor);
+        Material light = new DiffuseLight(lightColor);
+
         Material aluminium = new Metal(0.85, 0.0);
 
         world.Add(new Quad(new Vector3d(555, 0, 0), new Vector3d(0, 0, 555), new Vector3d(0, 555, 0), green, "Left"));
@@ -264,11 +277,11 @@ internal class Program
         Material glass = new Dielectric(1.5);
         world.Add(new Sphere(new Vector3d(190, 90, 190), 90, glass, "GlassSphere"));
 
-        // Indicate the location of the light source(s)
+        // Indicate the location of the light source(s) - also indicate the glass sphere
         Material emptyMaterial = new();
-        HittableList lights = new();
-        lights.Add(new Quad(new Vector3d(343, 554, 332), new Vector3d(-130, 0, 0), new Vector3d(0, 0, -105), emptyMaterial, "Light"));
-        lights.Add(new Sphere(new Vector3d(190, 90, 190), 90, emptyMaterial, "GlassSphere"));
+        HittableList sources = new();
+        sources.Add(new Quad(new Vector3d(343, 554, 332), new Vector3d(-130, 0, 0), new Vector3d(0, 0, -105), emptyMaterial, "Light"));
+        sources.Add(new Sphere(new Vector3d(190, 90, 190), 90, emptyMaterial, "GlassSphere"));
 
         Camera cam = new()
         {
@@ -289,10 +302,10 @@ internal class Program
         {
             // Fire just one ray, into the center of the viewfield
             cam.SamplesPerPixel = 1;
-            cam.TestRay(world, lights, cam.ImageWidth / 2, (int)((double)cam.ImageWidth / cam.AspectRatio) / 2);
+            cam.TestRay(world, sources, cam.ImageWidth / 2, (int)((double)cam.ImageWidth / cam.AspectRatio) / 2);
             return;
         }
-        cam.Render(world,lights);
+        cam.Render(world, sources);
         cam.WriteToPNG("cornellbox.png");
     }
 

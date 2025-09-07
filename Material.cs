@@ -46,12 +46,12 @@ public class Metal(double albedo, double fuzz) : Material
 
     public override bool Scatter(Ray rIn, HitRecord rec, ScatterRecord sRec, RTRandom generator)
     {
-        Vector3d reflected = Vector3d.Reflect(rIn.Direction, rec.Normal);
+        Vector3d reflected = Vector3d.Reflect(rIn.Direction, rec.Normal, rIn.Wavelength);
         reflected = reflected.UnitVector + (Fuzz * generator.RandomUnitVector());
         sRec.Attenuation = Albedo;
         sRec.SourcePDF = null;
         sRec.SkipPDF = true;
-        sRec.SkipPDFRay = new Ray(rec.P, reflected, rIn.Time);
+        sRec.SkipPDFRay = new Ray(rec.P, reflected, rIn.Time, rIn.Wavelength);
         return true;
     }
 }
@@ -75,13 +75,13 @@ public class Dielectric(double refractiveIndex) : Material
 
         if (cannotRefract || Reflectance(cosTheta, ri) > generator.RandomDouble())
         {
-            direction = Vector3d.Reflect(unitDirection, rec.Normal);
+            direction = Vector3d.Reflect(unitDirection, rec.Normal, rIn.Wavelength);
         }
         else
         {
-            direction = Vector3d.Refract(unitDirection, rec.Normal, ri);
+            direction = Vector3d.Refract(unitDirection, rec.Normal, ri, rIn.Wavelength);
         }
-        sRec.SkipPDFRay = new Ray(rec.P, direction, rIn.Time);
+        sRec.SkipPDFRay = new Ray(rec.P, direction, rIn.Time, rIn.Wavelength);
         return true;
     }
 

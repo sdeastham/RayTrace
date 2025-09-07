@@ -15,9 +15,14 @@ public class ColorRGB(double r, double g, double b) : Vector3d(r, g, b)
     public static ColorRGB operator +(ColorRGB c1, ColorRGB c2) => new(c1.R + c2.R, c1.G + c2.G, c1.B + c2.B);
     public static ColorRGB operator -(ColorRGB c1, ColorRGB c2) => new(c1.R - c2.R, c1.G - c2.G, c1.B - c2.B);
 
-    public double Reflectance(double wavelength)
+    private bool CoefficientsSet = false;
+
+    public double Reflectance(double wavelength) => CoefficientsSet ? JakobHanika2019Reflectance(wavelength) : SimpleReflectance(wavelength);
+
+    public double SimpleReflectance(double wavelength)
     {
-        // Very simple model: return the intensity of the color channel corresponding to the wavelength
+        // Very simple model: return the intensity of the color channel corresponding to the wavelength by just assuming
+        // that the color is made up of three pure wavelengths: 700nm (red), 546.1nm (green), 435.8nm (blue)
         double intensity = 0.0;
         if (wavelength < 380e-9 || wavelength > 780e-9)
             return 0.0; // Outside visible range
@@ -28,6 +33,28 @@ public class ColorRGB(double r, double g, double b) : Vector3d(r, g, b)
         else if (wavelength >= 450e-9) // Blue
             intensity = B;
         return intensity;
+    }
+
+    private double JHc0 = 0, JHc1 = 0, JHc2 = 0; // Coefficients for Jakob and Hanika 2019 model
+    public double JakobHanika2019Reflectance(double wavelength)
+    {
+        // Model to convert RGB to spectral reflectance based on Jakob and Hanika 2019
+        // "A Low-Dimensional Function Space for Efficient Spectral Upsampling"
+        if (wavelength < 380e-9 || wavelength > 780e-9)
+            return 0.0; // Outside visible range
+
+        // Black - or coefficients were not set
+        if (JHc0 == 0 && JHc1 == 0 && JHc2 == 0) return 0.0;
+
+        // Apply the Jakob and Hanika model
+        double x = JHc2 + JHc1 * Math.Pow(wavelength, 1) + JHc0 * Math.Pow(wavelength, 2);
+        double reflectance = 0.5 + (x / (2.0 * Math.Sqrt(1.0 + x * x)));
+        return reflectance;
+    }
+    public void SetCoefficientsForJakobHanika2019Model(SpectralMapping mapping)
+    {
+        // Given the scale and data arrays loaded from file, set the coefficients for this color
+        (JHc0, JHc1, JHc2) = mapping.ConvertRGBToJH2019(R, G, B);
     }
 }
 
@@ -46,10 +73,9 @@ public class ColorXYZ(double x, double y, double z) : Vector3d(x, y, z)
     public ColorRGB ToRGB()
     {
         // Convert from CIE 1931 XYZ to linear sRGB
-        // Need to investigate where this came from..
         double r = +3.2406 * X - 1.5372 * Y - 0.4986 * Z;
         double g = -0.9689 * X + 1.8758 * Y + 0.0415 * Z;
-        double b = +0.0557 * X - 0.2040 * Y + 1.0570 * Z;
+        double b = +0.0557 * X - 0.2040 * Y + 1.0572 * Z;
         return new ColorRGB(r, g, b);
     }
 

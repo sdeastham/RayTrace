@@ -33,12 +33,12 @@ public class Vector3d
         }
     }
 
-    public static Vector3d Reflect(Vector3d v, Vector3d normal)
+    public static Vector3d Reflect(Vector3d v, Vector3d normal, double wavelength)
     {
         return v - 2.0 * Dot(v, normal) * normal;
     }
 
-    public static Vector3d Refract(Vector3d uv, Vector3d normal, double indexRatio)
+    public static Vector3d Refract(Vector3d uv, Vector3d normal, double indexRatio, double wavelength)
     {
         // uv -- Incoming vector (must be unit vector)
         // normal -- Surface normal

@@ -17,13 +17,10 @@ public class Texture : ITexture
     }
 }
 
-public class SolidColor : Texture
+public class SolidColor(ColorRGB albedo) : Texture
 {
-    private ColorRGB Albedo;
-    public SolidColor(ColorRGB albedo)
-    {
-        Albedo = albedo;
-    }
+    private ColorRGB Albedo = albedo;
+
     public SolidColor(double r, double g, double b) : this(new ColorRGB(r, g, b)) { }
     public override double Value(double u, double v, Vector3d p, double wavelength)
     {
