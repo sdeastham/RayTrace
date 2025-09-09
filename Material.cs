@@ -66,7 +66,8 @@ public class Dielectric(double refractiveIndex) : Material
         sRec.Attenuation = 1.0; // No attenuation
         sRec.SourcePDF = null;
         sRec.SkipPDF = true;
-        double ri = rec.FrontFace ? (1.0 / RefractiveIndex) : RefractiveIndex;
+        double wavelengthRefractiveIndex = CalculateRefractiveIndex(rIn.Wavelength);
+        double ri = rec.FrontFace ? (1.0 / wavelengthRefractiveIndex) : wavelengthRefractiveIndex;
         Vector3d unitDirection = rIn.Direction.UnitVector;
         double cosTheta = Math.Min(Vector3d.Dot(-unitDirection, rec.Normal), 1.0);
         double sinTheta = Math.Sqrt(1.0 - cosTheta * cosTheta);
@@ -91,6 +92,17 @@ public class Dielectric(double refractiveIndex) : Material
         var r0 = (1.0 - refractiveIndex) / (1.0 + refractiveIndex);
         r0 *= r0;
         return r0 + (1.0 - r0) * Math.Pow(1.0 - cosine, 5.0);
+    }
+
+    private double CalculateRefractiveIndex(double wavelength)
+    {
+        // Simple Cauchy equation for refractive index as a function of wavelength
+        // wavelength is in meters; convert to micrometers for the equation
+        double lambdaMicrometers = wavelength * 1e6;
+        // Typical values for glass BK7: A = 1.5046, B = 0.00420 (in micrometers squared)
+        double A = 1.5046;
+        double B = 0.00420;
+        return A + (B / (lambdaMicrometers * lambdaMicrometers));
     }
 }
 

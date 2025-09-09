@@ -26,7 +26,7 @@ internal class Program
             case 4: await PerlinSpheres(); break;
             case 5: await Quads(); break;
             case 6: await SimpleLight(); break;
-            case 7: await CornellBox(400, 150, 50); break;
+            case 7: await CornellBox(600, 500, 50); break;
             case 8: await CornellSmoke(); break;
             case 9: await FinalScene(400, 20, 4); break;
             case 10: await PinkTrails(imageWidth: 400, samplesPerPixel: 10, maxDepth: 5); break;
